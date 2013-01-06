@@ -94,7 +94,7 @@ sub copy_images{
 		
 		# We now know the dates when the file was created
 		# Check if directory exists, if not, create it
-		my $image_dst_dir = $dst_dir . $year . $month . $day;
+		my $image_dst_dir = $dst_dir . "/" . $year . "/" . $month . "/" . $day;
 		unless (-d $image_dst_dir){
 			# create directory
 			log_it("Creating directory '$image_dst_dir'...");
