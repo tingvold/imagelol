@@ -64,16 +64,16 @@ sub copy_images{
 		
 		# We need to figure out the date the picture was taken
 		# First we try to use EXIF, and if that fails, we use the 'file created'
-		my $exif_tags = Image::ExifTool::ImageInfo($image_full_path, { PrintConv => 0 }, 'DateTimeOriginal');
-		die error_log("EXIF failed: $exif_tags->{Error}") if $exif_tags->{'Error'};
+		my $exif_date = Image::ExifTool::ImageInfo($image_full_path, { PrintConv => 0 }, 'DateTimeOriginal');
+		die error_log("EXIF failed: $exif_date->{Error}") if $exif_date->{'Error'};
 
 		my $date;
-		if (defined($exif_tags->{'DateTimeOriginal'})){
+		if (defined($exif_date->{'DateTimeOriginal'})){
 			# We have a value
 			# 'DateTimeOriginal' => '2012:12:31 17:50:01',
 			
-			if ($exif_tags->{'DateTimeOriginal'} =~ m/^[0-9]{4}\:[0-9]{2}\:[0-9]{2}\s+/){
-				$date = (split(' ', $exif_tags->{'DateTimeOriginal'}))[0];
+			if ($exif_date->{'DateTimeOriginal'} =~ m/^[0-9]{4}\:[0-9]{2}\:[0-9]{2}\s+/){
+				$date = (split(' ', $exif_date->{'DateTimeOriginal'}))[0];
 			}
 		}
 		
@@ -113,14 +113,14 @@ sub copy_images{
 		# Extract preview
 		# Save full version + resized version
 		log_it("Extracting preview from RAW file...");
-		my $exif_tags = Image::ExifTool::ImageInfo($image_dst_file, { PrintConv => 0 }, 'PreviewImage');
+		my $exif_preview = Image::ExifTool::ImageInfo($image_dst_file, { PrintConv => 0 }, 'PreviewImage');
 
 		# Exit if error
-		die error_log("Error trying to fetch EXIF-data: $exif_tags->{'Error'}") if($exif_tags->{'Error'});
-		die error_log("No preview found.") unless defined($exif_tags->{'PreviewImage'});
+		die error_log("Error trying to fetch EXIF-data: $exif_preview->{'Error'}") if($exif_preview->{'Error'});
+		die error_log("No preview found.") unless defined($exif_preview->{'PreviewImage'});
 
 		# Fetch JPG
-		my $jpg_from_raw = $exif_tags->{'PreviewImage'};
+		my $jpg_from_raw = $exif_preview->{'PreviewImage'};
 		$jpg_from_raw = $$jpg_from_raw if ref($jpg_from_raw);
 
 		# Create dir
