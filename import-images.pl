@@ -90,7 +90,7 @@ sub copy_images{
 		
 		# At this point it should be safe to assume that $date has a value
 		# And that it looks like YYYY:MM:DD
-		my ($year, $month, $day) = split('-', $date);
+		my ($year, $month, $day) = split(':', $date);
 		
 		# We now know the dates when the file was created
 		# Check if directory exists, if not, create it
