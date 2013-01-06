@@ -29,17 +29,9 @@
 	scp = /usr/bin/scp
 	mkdir = /bin/mkdir
 	rm = /bin/rm
-	lastlog = /usr/bin/lastlog
 	hostname = /bin/hostname
 	who = /usr/bin/who
 	touch = /bin/touch
-	list_lists = /usr/sbin/list_lists
-	list_members = /usr/sbin/list_members
-	add_members = /usr/sbin/add_members
-	remove_members = /usr/sbin/remove_members
-	newlist = /usr/sbin/newlist
-	sync_members = /usr/sbin/sync_members
-	config_list = /usr/sbin/config_list
 	grep = /bin/grep
 	echo = /bin/echo
 </binaries>

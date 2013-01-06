@@ -217,6 +217,16 @@ sub copy_stuff{
 	(system("$config{binaries}->{cp} -p $source $dest") == 0) or die error_log("Copy of file '$source' to '$dest' failed.");
 }
 
+# Create dir
+sub system_mkdir{
+	if ($_[0] =~ m/HASH/){
+		#Value is a reference on an anonymous hash
+		shift; # Remove class that is passed to the subroutine
+	}
+	my $dir = "@_";
+	
+	(system("$config{binaries}->{mkdir} -p $dir") == 0) or die("Could not create directory '$dir'.");
+}
 
 
 
