@@ -62,16 +62,16 @@ sub copy_images{
 		
 		# We need to figure out the date the picture was taken
 		# First we try to use EXIF, and if that fails, we use the 'file created'
-		my $exif_date = Image::ExifTool::ImageInfo($image_full_path, { PrintConv => 0 }, 'DateTimeOriginal');
-		die error_log("EXIF failed: $exif_date->{Error}") if $exif_date->{'Error'};
+		my $exif_tags = Image::ExifTool::ImageInfo($image_full_path, { PrintConv => 0 }, 'DateTimeOriginal');
+		die error_log("EXIF failed: $exif_tags->{Error}") if $exif_tags->{'Error'};
 
 		my $date;
-		if (defined($exif_date->{'DateTimeOriginal'})){
+		if (defined($exif_tags->{'DateTimeOriginal'})){
 			# We have a value
 			# 'DateTimeOriginal' => '2012:12:31 17:50:01',
 			
-			if ($exif_date->{'DateTimeOriginal'} =~ m/^[0-9]{4}\:[0-9]{2}\:[0-9]{2}\s+/){
-				$date = (split(' ', $exif_date->{'DateTimeOriginal'}))[0];
+			if ($exif_tags->{'DateTimeOriginal'} =~ m/^[0-9]{4}\:[0-9]{2}\:[0-9]{2}\s+/){
+				$date = (split(' ', $exif_tags->{'DateTimeOriginal'}))[0];
 			}
 		}
 		
@@ -79,9 +79,9 @@ sub copy_images{
 			# No (valid) date was found with EXIF
 			# Using 'file created'
 			
-			# Last access:		ctime(stat($_)->atime);
-			# Last modify:		ctime(stat($_)->mtime);
-			# File creation:	ctime(stat($_)->ctime);
+			# Last access:		stat($_)->atime
+			# Last modify:		stat($_)->mtime
+			# File creation:	stat($_)->ctime
 			
 			# Use YYYY:MM:DD, so that it's the same output as EXIF
 			$date = POSIX::strftime("%Y:%m:%d", localtime(stat($image_full_path)->atime()));
@@ -106,6 +106,9 @@ sub copy_images{
 		# Copy image
 		log_it("Copying image '$image_full_path' to '$image_dst_dir/$image_file'...");
 		$imagelol->copy_stuff($image_full_path, "$image_dst_dir/");
+		
+		# Extract preview
+		
 	}
 }
 
