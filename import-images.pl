@@ -5,7 +5,6 @@ use lib "/opt/local/lib/perl5/site_perl/5.12.4";
 use Getopt::Long;
 use File::Find;
 use Image::ExifTool;
-use Time::localtime;
 use File::stat;
 
 # Load imagelol
@@ -86,7 +85,7 @@ sub copy_images{
 			
 			# Use YYYY:MM:DD, so that it's the same output as EXIF
 			$date = POSIX::strftime("%Y:%m:%d", localtime(stat($image_full_path)->atime()));
-		}
+		}		
 		
 		# At this point it should be safe to assume that $date has a value
 		# And that it looks like YYYY:MM:DD
