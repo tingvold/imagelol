@@ -47,18 +47,18 @@ sub show_image{
 	my $jpg_from_raw = $exif_tags->{'PreviewImage'};
 	$jpg_from_raw = $$jpg_from_raw if ref($jpg_from_raw);
 	
-	my $JPG_FILE;
-	my $jpg_filename = "/srv/bilder/tmp/testing.jpg";
-	open(JPG_FILE,">$jpg_filename") or print("Error creating $jpg_filename\n"), return 0;
-    	binmode(JPG_FILE);
-    	my $err;
-
-    	print JPG_FILE $jpg_from_raw or $err = 1;
-	close(JPG_FILE) or $err = 1;
-    	if ($err) {
-      		unlink $jpg_filename; # remove the bad file
-		print_error();
-    	}
+	# my $JPG_FILE;
+	# my $jpg_filename = "/srv/bilder/tmp/testing.jpg";
+	# open(JPG_FILE,">$jpg_filename") or print("Error creating $jpg_filename\n"), return 0;
+	#     	binmode(JPG_FILE);
+	#     	my $err;
+	# 
+	#     	print JPG_FILE $jpg_from_raw or $err = 1;
+	# close(JPG_FILE) or $err = 1;
+	#     	if ($err) {
+	#       		unlink $jpg_filename; # remove the bad file
+	# 	print_error();
+	#     	}
 	
 	# this must be done for windows
 	binmode STDOUT;
@@ -68,7 +68,8 @@ sub show_image{
 	
 	# print the image
 	print "Content-type: image/jpeg\n\n";
-	copy $jpg_filename, \*STDOUT;
+	#copy $jpg_filename, \*STDOUT;
+	print \*STDOUT $jpg_from_raw;
 }
 
 # print if error
