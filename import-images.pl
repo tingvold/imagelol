@@ -6,7 +6,7 @@ use Getopt::Long;
 
 # Load imagelol
 my $imagelol_dir;
-BEGIN { $imagelol_dir = "/opt/userlol"; }
+BEGIN { $imagelol_dir = "/srv/bilder/imagelol"; }
 use lib $imagelol_dir;
 use imagelol;
 my $imagelol = imagelol->new();
