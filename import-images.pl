@@ -41,8 +41,8 @@ if (@ARGV > 0) {
 $src_dir = $config{path}->{import_folder} unless $src_dir;
 $dst_dir = $config{path}->{archive_folder} unless $dst_dir;
 
-unless (-d $src_dir) die error_log("Source directory doesn't exist. Exiting....");
-unless (-d $dst_dir) die error_log("Destination directory doesn't exist. Exiting....");
+die error_log("Source directory doesn't exist. Exiting....") unless (-d $src_dir);
+die error_log("Destination directory doesn't exist. Exiting....") unless (-d $dst_dir);
 
 # Import images
 sub import_images{
