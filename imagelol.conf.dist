@@ -1,0 +1,44 @@
+<switch>
+	silent_logging = 0
+	simple_logging = 0
+	debug_log = 0
+</switch>
+
+<path>
+	working_folder = /srv/bilder/imagelol
+	log_folder = $working_folder/logs
+	temp_folder = $working_folder/temp
+	logfile_prefix = imagelol
+	import_folder = /srv/bilder/import
+	archive_folder = /srv/bilder/arkiv/6D
+</path>
+
+<div>
+	imagelol_uid = jocke
+	imagelol_gid = jocke
+</div>
+
+<regex>
+</regex>
+
+<binaries>
+	chown = /bin/chown
+	chmod = /bin/chmod
+	cp = /bin/cp
+	scp = /usr/bin/scp
+	mkdir = /bin/mkdir
+	rm = /bin/rm
+	lastlog = /usr/bin/lastlog
+	hostname = /bin/hostname
+	who = /usr/bin/who
+	touch = /bin/touch
+	list_lists = /usr/sbin/list_lists
+	list_members = /usr/sbin/list_members
+	add_members = /usr/sbin/add_members
+	remove_members = /usr/sbin/remove_members
+	newlist = /usr/sbin/newlist
+	sync_members = /usr/sbin/sync_members
+	config_list = /usr/sbin/config_list
+	grep = /bin/grep
+	echo = /bin/echo
+</binaries>
