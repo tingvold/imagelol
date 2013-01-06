@@ -69,7 +69,7 @@ sub show_image{
 	# print the image
 	print "Content-type: image/jpeg\n\n";
 	#copy $jpg_filename, \*STDOUT;
-	print \*STDOUT $jpg_from_raw;
+	print STDOUT $jpg_from_raw;
 }
 
 # print if error

@@ -108,6 +108,8 @@ sub copy_images{
 		$imagelol->copy_stuff($image_full_path, "$image_dst_dir/");
 		
 		# Extract preview
+		# Save full version + resized version
+		
 		
 	}
 }
