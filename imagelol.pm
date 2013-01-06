@@ -214,3 +214,16 @@ sub copy_stuff{
 	debug_log("Copying '$source' to '$dest'...");
 	(system("$config{binaries}->{cp} -p $source $dest") == 0) or die error_log("Copy of file '$source' to '$dest' failed.");
 }
+
+
+
+
+
+
+
+
+
+
+
+
+1;
