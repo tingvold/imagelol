@@ -1,6 +1,7 @@
 #!/usr/bin/perl
 use strict;
 use warnings;
+use POSIX qw(strftime);
 use Config::General;
 
 # Define imagelol-dir, and add it to %INC
