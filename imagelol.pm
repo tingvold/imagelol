@@ -240,6 +240,17 @@ sub resize_image{
 	(system("$config{binaries}->{convert} -geometry ${width}x${height} $src $dst") == 0) or die("Could not resize image '$src'...");
 }
 
+# Rotate image
+sub rotate_image{
+	if ($_[0] =~ m/HASH/){
+		#Value is a reference on an anonymous hash
+		shift; # Remove class that is passed to the subroutine
+	}
+	
+	my ($src, $dst) = @_;
+	
+	(system("$config{binaries}->{convert} -auto-orient $src $dst") == 0) or die("Could not rotate image '$src'...");
+}
 
 
 

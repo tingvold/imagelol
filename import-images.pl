@@ -153,6 +153,9 @@ sub copy_images{
 			die error_log("Could not copy preview image '$jpg_dst_full'. Aborting.");
 		}
 		
+		# Rotate full preview (if needed)
+		$imagelol->rotate_image($jpg_dst_full, $jpg_dst_full);
+		
 		# Make resized preview
 		$imagelol->resize_image($config{image}->{medium_width}, $config{image}->{medium_height}, $jpg_dst_full, $jpg_dst_small);
 	}
