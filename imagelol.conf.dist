@@ -10,7 +10,9 @@
 	temp_folder = $working_folder/temp
 	logfile_prefix = imagelol
 	import_folder = /srv/bilder/import
-	archive_folder = /srv/bilder/arkiv/6D
+	original_folder = /srv/bilder/arkiv/original
+	preview_folder = /srv/bilder/arkiv/preview
+	default_category = 6D
 </path>
 
 <div>
@@ -19,8 +21,10 @@
 	image_filenames = CR2|jpg|jpeg
 </div>
 
-<regex>
-</regex>
+<image>
+	medium_width = 1024
+	medium_height = 768
+</image>
 
 <binaries>
 	chown = /bin/chown
@@ -34,4 +38,5 @@
 	touch = /bin/touch
 	grep = /bin/grep
 	echo = /bin/echo
+	convert = /usr/bin/convert
 </binaries>

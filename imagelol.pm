@@ -228,7 +228,17 @@ sub system_mkdir{
 	(system("$config{binaries}->{mkdir} -p $dir") == 0) or die("Could not create directory '$dir'.");
 }
 
-
+# Resize image
+sub resize_image{
+	if ($_[0] =~ m/HASH/){
+		#Value is a reference on an anonymous hash
+		shift; # Remove class that is passed to the subroutine
+	}
+	
+	my ($width, $height, $src, $dst) = @_;
+	
+	(system("$config{binaries}->{convert} -geometry ${width}x${height} $src $dst") == 0) or die("Could not resize image '$src'...");
+}
 
 
 
