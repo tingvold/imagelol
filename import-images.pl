@@ -40,7 +40,9 @@ if (@ARGV > 0) {
 }
 
 # Set paths from config, unless provided as parameter
-die error_log("Invalid category. Only numbers and letters allowed.") unless ($category =~ m/^[a-zA-Z0-9]$/);
+if ($category){
+	die error_log("Invalid category. Only numbers and letters allowed.") unless ($category =~ m/^[a-zA-Z0-9]$/);
+}
 
 $category = $config{path}->{default_category} unless $category;
 $src_dir = $config{path}->{import_folder} unless $src_dir;
