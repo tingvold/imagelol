@@ -16,6 +16,7 @@
 <div>
 	imagelol_uid = jocke
 	imagelol_gid = jocke
+	image_filenames = CR2|jpg|jpeg
 </div>
 
 <regex>

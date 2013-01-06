@@ -3,6 +3,7 @@ use strict;
 use warnings;
 use POSIX qw(strftime);
 use Config::General;
+use Fcntl qw(:flock);
 
 # Define imagelol-dir, and add it to %INC
 my $imagelol_dir;

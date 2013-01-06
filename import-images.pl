@@ -3,6 +3,7 @@ use strict;
 use warnings;
 use lib "/opt/local/lib/perl5/site_perl/5.12.4";
 use Getopt::Long;
+use File::Find;
 
 # Load imagelol
 my $imagelol_dir;
@@ -40,7 +41,42 @@ if (@ARGV > 0) {
 $src_dir = $config{path}->{import_folder} unless $src_dir;
 $dst_dir = $config{path}->{archive_folder} unless $dst_dir;
 
-print "src: $src_dir\n";
-print "dst: $dst_dir\n";
+unless (-d $src_dir) die error_log("Source directory doesn't exist. Exiting....");
+unless (-d $dst_dir) die error_log("Destination directory doesn't exist. Exiting....");
 
+# Import images
+sub import_images{
+	# Find and import all images
+	find(\&copy_images, $src_dir);
+}
 
+# Copy images
+sub copy_images{
+	my $image_full_path = "$File::Find::name";
+	my $image_file = "$_";
+	
+	if ($image_file =~ m/^.+\.$config{div}->{image_filenames}$/){
+	
+		log_it("Copying image '$image_full_path'...");
+		
+	}
+}
+
+# We only want 1 instance of this script running
+# Check if already running -- if so, abort.
+unless (flock(DATA, LOCK_EX|LOCK_NB)) {
+	die error_log("$0 is already running. Exiting.");
+}
+
+# Let's start...
+my $time_start = time();
+
+# Import images...
+import_images();
+
+# How long did we run
+my $runtime = time() - $time_start;
+log_it("Took $runtime seconds to complete.");
+
+__DATA__
+Do not remove. Makes sure flock() code above works as it should.
