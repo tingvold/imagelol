@@ -1,6 +1,7 @@
 #!/usr/bin/perl
 use strict;
 use warnings;
+use Config::General;
 
 # Define imagelol-dir, and add it to %INC
 my $imagelol_dir;
