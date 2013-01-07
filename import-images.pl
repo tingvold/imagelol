@@ -141,21 +141,21 @@ sub copy_images{
 		my $jpg_dst_small = $preview_dst_dir . "/" . $jpg_filename_small;
 		
 		# Copy full preview
-		my $JPG_FILE;
-		open(JPG_FILE,">$jpg_dst_full") or die error_log("Error creating '$jpg_dst_full'.");
-		binmode(JPG_FILE);
-		my $err;
-		print JPG_FILE $jpg_from_raw or $err = 1;
-		close(JPG_FILE) or $err = 1;
-		if ($err) {
-			unlink $jpg_dst_full; # remove the bad file
-			die error_log("Could not copy preview image '$jpg_dst_full'. Aborting.");
-		}
+		# my $JPG_FILE;
+		# open(JPG_FILE,">$jpg_dst_full") or die error_log("Error creating '$jpg_dst_full'.");
+		# binmode(JPG_FILE);
+		# my $err;
+		# print JPG_FILE $jpg_from_raw or $err = 1;
+		# close(JPG_FILE) or $err = 1;
+		# if ($err) {
+		# 	unlink $jpg_dst_full; # remove the bad file
+		# 	die error_log("Could not copy preview image '$jpg_dst_full'. Aborting.");
+		# }
 		
 		# Copy EXIF-data from RAW, into preview
 		my $exif = Image::ExifTool->new();
 		my $info = $exif->SetNewValuesFromFile($image_full_path);
-		my $result = $exif->WriteInfo($image_full_path, $jpg_dst_full);
+		my $result = $exif->WriteInfo($jpg_from_raw, $jpg_dst_full);
 		die error_log("Error copying EXIF-data: " . $exif->GetValue('Warning')) if $exif->GetValue('Warning');
 		die error_log("Error copying EXIF-data: " . $exif->GetValue('Error')) if $exif->GetValue('Error');
 		
