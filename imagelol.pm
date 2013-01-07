@@ -252,6 +252,17 @@ sub rotate_image{
 	(system("$config{binaries}->{convert} -auto-orient $src $dst") == 0) or die("Could not rotate image '$src'...");
 }
 
+# Copy EXIF info
+sub copy_exif{
+	if ($_[0] =~ m/HASH/){
+		#Value is a reference on an anonymous hash
+		shift; # Remove class that is passed to the subroutine
+	}
+	
+	my ($src, $dst) = @_;
+	
+	(system("$config{binaries}->{exiftool} -tagsfromfile $src $dst") == 0) or die("Could not copy EXIF-info from '$src' to '$dst'...");
+}
 
 
 

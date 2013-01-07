@@ -39,4 +39,5 @@
 	grep = /bin/grep
 	echo = /bin/echo
 	convert = /usr/bin/convert
+	exiftool = /usr/bin/exiftool
 </binaries>
