@@ -261,7 +261,7 @@ sub copy_exif{
 	
 	my ($src, $dst) = @_;
 	
-	(system("$config{binaries}->{exiftool} -q -overwrite_original -tagsfromfile $src $dst") == 0) or die("Could not copy EXIF-info from '$src' to '$dst'...");
+	(system("$config{binaries}->{exiftool} -q -overwrite_original -x PreviewImage -tagsfromfile $src $dst") == 0) or die("Could not copy EXIF-info from '$src' to '$dst'...");
 }
 
 
