@@ -48,7 +48,7 @@ $category = $config{path}->{default_category} unless $category;
 $src_dir = $config{path}->{import_folder} unless $src_dir;
 $dst_dir = $config{path}->{original_folder} . "/" . $category;
 
-die error_log("Source directory doesn't exist. Exiting....") unless (-d $src_dir);
+die error_log("Source directory doesn't exist. Exiting.") unless (-d $src_dir);
 
 # Import images
 sub import_images{
@@ -101,7 +101,7 @@ sub copy_images{
 		my $image_dst_dir = $dst_dir . "/" . $year . "/" . $month . "/" . $day;
 		unless (-d $image_dst_dir){
 			# create directory
-			log_it("Creating directory '$image_dst_dir'...");
+			log_it("Creating directory '$image_dst_dir'.");
 			$imagelol->system_mkdir($image_dst_dir);
 		}
 				
@@ -110,12 +110,12 @@ sub copy_images{
 		die error_log("Destination file ($image_dst_file) exists. Aborting.") if (-e $image_dst_file);
 		
 		# Copy image
-		log_it("Copying image '$image_full_path' to '$image_dst_file'...");
+		log_it("Copying image '$image_full_path' to '$image_dst_file'.");
 		$imagelol->copy_stuff($image_full_path, "$image_dst_dir/");
 		
 		# Extract preview
 		# Save full version + resized version
-		log_it("Extracting preview from RAW file...");
+		log_it("Extracting preview from RAW file.");
 
 		# Exit if error
 		die error_log("No preview found.") unless defined($exif_tags->{'PreviewImage'});
@@ -128,7 +128,7 @@ sub copy_images{
 		my $preview_dst_dir = $config{path}->{preview_folder} . "/" . $category . "/" . $year . "/" . $month . "/" . $day;
 		unless (-d $preview_dst_dir){
 			# create directory
-			log_it("Creating directory '$preview_dst_dir'...");
+			log_it("Creating directory '$preview_dst_dir'.");
 			$imagelol->system_mkdir($preview_dst_dir);
 		}
 
