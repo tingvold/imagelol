@@ -67,7 +67,7 @@ sub copy_images{
 		# We need to figure out the date the picture was taken
 		# First we try to use EXIF, and if that fails, we use the 'file created'
 		my $exif_tags = Image::ExifTool::ImageInfo(	$image_full_path, { PrintConv => 0 },
-								'DateTimeOriginal','PreviewImage','Rotation');
+								'DateTimeOriginal','PreviewImage','Orientation');
 		die error_log("EXIF failed: $exif_tags->{Error}") if $exif_tags->{'Error'};
 
 		my $date;
@@ -159,12 +159,15 @@ sub copy_images{
 		# http://sylvana.net/jpegcrop/exif_orientation.html
 		# http://www.impulseadventure.com/photo/exif-orientation.html
 		# We do rotation unless 'rotation == 1'
+		
+		print "rotation: $exif_tags->{'Rotation'}\n";
 		my $rotate = 0;
 		if (defined($exif_tags->{'Rotation'})){
 			$rotate = 1 unless ($exif_tags->{'Rotation'} == 1);
 		} else {
 			$rotate = 1;
 		}
+		print "rotate: $rotate\n";
 		$imagelol->rotate_image($jpg_dst_full, $jpg_dst_full) if $rotate;
 		
 		# Make resized preview
