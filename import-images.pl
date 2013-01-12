@@ -158,12 +158,11 @@ sub copy_images{
 		# Rotate full preview (if needed)
 		# http://sylvana.net/jpegcrop/exif_orientation.html
 		# http://www.impulseadventure.com/photo/exif-orientation.html
-		# We do rotation unless 'rotation == 1'
-		
-		print "rotation: $exif_tags->{'Rotation'}\n";
+		# We do rotation unless 'rotation == 1'	
+		print "rotation: $exif_tags->{'Orientation'}\n";
 		my $rotate = 0;
-		if (defined($exif_tags->{'Rotation'})){
-			$rotate = 1 unless ($exif_tags->{'Rotation'} == 1);
+		if (defined($exif_tags->{'Orientation'})){
+			$rotate = 1 unless ($exif_tags->{'Orientation'} == 1);
 		} else {
 			$rotate = 1;
 		}
