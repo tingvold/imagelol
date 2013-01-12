@@ -156,7 +156,16 @@ sub copy_images{
 		$imagelol->copy_exif($image_full_path, $jpg_dst_full);
 		
 		# Rotate full preview (if needed)
-		$imagelol->rotate_image($jpg_dst_full, $jpg_dst_full);
+		# http://sylvana.net/jpegcrop/exif_orientation.html
+		# http://www.impulseadventure.com/photo/exif-orientation.html
+		# We do rotation unless 'rotation == 1'
+		my $rotate = 0;
+		if (defined($exif_tags->{'Rotation'})){
+			$rotate = 1 unless ($exif_tags->{'Rotation'} == 1);
+		} else {
+			$rotate = 1;
+		}
+		$imagelol->rotate_image($jpg_dst_full, $jpg_dst_full) if $rotate;
 		
 		# Make resized preview
 		$imagelol->resize_image($config{image}->{medium_width}, $config{image}->{medium_height}, $jpg_dst_full, $jpg_dst_small);
