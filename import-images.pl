@@ -159,14 +159,12 @@ sub copy_images{
 		# http://sylvana.net/jpegcrop/exif_orientation.html
 		# http://www.impulseadventure.com/photo/exif-orientation.html
 		# We do rotation unless 'rotation == 1'	
-		print "rotation: $exif_tags->{'Orientation'}\n";
 		my $rotate = 0;
 		if (defined($exif_tags->{'Orientation'})){
 			$rotate = 1 unless ($exif_tags->{'Orientation'} == 1);
 		} else {
 			$rotate = 1;
 		}
-		print "rotate: $rotate\n";
 		$imagelol->rotate_image($jpg_dst_full, $jpg_dst_full) if $rotate;
 		
 		# Make resized preview
