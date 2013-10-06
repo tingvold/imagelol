@@ -1,6 +1,7 @@
 #!/usr/bin/perl
 use strict;
 use warnings;
+use DBI;
 use POSIX qw(strftime);
 use Config::General;
 use Fcntl qw(:flock);
@@ -26,6 +27,14 @@ my $simple_logging = $config{switch}->{simple_logging};
 # Variables
 my $LOG_FILE;
 my $error = 0;
+
+my $sql_statements = {
+	add_image =>		"	INSERT 	INTO images
+						(imagename, path, imagedate, category)
+
+					VALUES 	(?, ?, ?, ?)	
+				",
+};
 
 # Create class
 sub new{
@@ -158,6 +167,28 @@ sub is_root{
 	}
 }
 
+# Connect to database
+sub connect{
+	my $self = shift;
+	
+	#if (pingable($config{db}->{hostname})){
+	if (1){
+		$self->{_dbh} = DBI->connect(	"DBI:Pg:dbname=$config{db}->{database};host=$config{db}->{hostname};port=$config{db}->{port};sslmode=require",
+						"$config{db}->{username}", "$config{db}->{password}", {'RaiseError' => 1}) 
+				or die log_it("imagelol", "Got error $DBI::errstr when connecting to database.");
+	} else {
+		error_log("imagelol", "Could not ping database-server.");
+		exit 1;
+	}
+}
+
+# Disconnect from database
+sub disconnect{
+	my $self = shift;
+	$self->{_dbh}->disconnect();
+}
+
+
 # Chmod
 sub system_chmod{
 	if ($_[0] =~ m/HASH/){
@@ -264,7 +295,15 @@ sub copy_exif{
 	(system("$config{binaries}->{exiftool} -q -overwrite_original -tagsfromfile $src --makernotecanon $dst") == 0) or die("Could not copy EXIF-info from '$src' to '$dst'...");
 }
 
+# Add image to database
+sub db_add_image{
+	my $self = shift;
+	my ($imagename, $path, $imagedate, $category) = @_;
 
+	$self->{_sth} = $self->{_dbh}->prepare($sql_statements->{add_image});
+	$self->{_sth}->execute($imagename, $path, $imagedate, $category);
+	$self->{_sth}->finish();
+}
 
 
 

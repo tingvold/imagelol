@@ -19,12 +19,8 @@ my $imagelol = imagelol->new();
 my %config = $imagelol->get_config();
 
 # Variables
-my $max_threads = 5;			# Max threads to use
+my $max_threads = 10;			# Max threads to use
 my $imageq = Thread::Queue->new(); 	# Queue to put image files in
-#my $switches : shared = 0;		# Number of successful switches
-#my $failed_switches : shared = 0;	# Number of failed switches
-#my $total_time : shared = 0;		# Total time spent for all switches
-#my %telnet_sessions : shared;		# Number of sessions currently in use
 
 # Log
 sub log_it{
@@ -100,13 +96,15 @@ sub process_image{
 								### tags depending on wether or not it's a raw file
 		return error_log("EXIF failed: $exif_tags->{Error}") if $exif_tags->{'Error'};
 
-		my $date;
+		my ($date, $time, $full_date);
 		if (defined($exif_tags->{'DateTimeOriginal'})){
 			# We have a value
 			# 'DateTimeOriginal' => '2012:12:31 17:50:01',
 
 			if ($exif_tags->{'DateTimeOriginal'} =~ m/^[0-9]{4}\:[0-9]{2}\:[0-9]{2}\s+/){
-				$date = (split(' ', $exif_tags->{'DateTimeOriginal'}))[0];
+				($date, $time) = (split(' ', $exif_tags->{'DateTimeOriginal'}));
+				($full_date = $date) =~ s/\:/-/g;
+				$full_date .= " " . $time;
 			}
 		}
 
@@ -120,6 +118,7 @@ sub process_image{
 
 			# Use YYYY:MM:DD, so that it's the same output as EXIF
 			$date = POSIX::strftime("%Y:%m:%d", localtime(stat($image->{full_path})->ctime()));
+			$full_date = POSIX::strftime("%Y-%m-%d %H:%M:%S", localtime(stat($image->{full_path})->ctime()));
 		}		
 
 		# At this point it should be safe to assume that $date
@@ -202,6 +201,9 @@ sub process_image{
 		}
 		$imagelol->rotate_image($jpg_dst, $jpg_dst) if $rotate;
 		
+		# Add to database
+		db_add_image($image->{image_file}, $image->{full_path}, $full_date, $category);
+		
 		# Done
 		return 1;
 	} else {
@@ -233,6 +235,7 @@ unless (flock(DATA, LOCK_EX|LOCK_NB)) {
 
 # Let's start...
 my $time_start = time();
+$imagelol->connect();
 
 # Find all images, add to queue
 find_images();
@@ -245,6 +248,8 @@ threads->create("process_images") for (1..$max_threads);
 
 # Wait till all threads is done
 sleep 5 while (threads->list(threads::running));
+
+$imagelol->disconnect();
 
 # How long did we run
 my $runtime = time() - $time_start;
