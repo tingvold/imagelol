@@ -32,7 +32,7 @@ my $sql_statements = {
 	add_image =>		"	INSERT 	INTO images
 						(imagename, path_original, imagedate, category, path_preview)
 
-					VALUES 	(?, ?, ?, ?)	
+					VALUES 	(?, ?, ?, ?, ?)	
 				",
 };
 
