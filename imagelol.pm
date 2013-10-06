@@ -300,12 +300,6 @@ sub db_add_image{
 	my $self = shift;
 	my ($imagename, $path, $imagedate, $category) = @_;
 	
-	$self->{_sth} = $self->{_dbh}->prepare($sql_statements->{set_portchannel});
-	$self->{_sth}->execute($po, $switchid);
-	$self->{_sth}->finish();
-	
-	
-	
 	$self->{_sth} = $self->{_dbh}->prepare($sql_statements->{add_image});
 	$self->{_sth}->execute($imagename, $path, $imagedate, $category);
 	$self->{_sth}->finish();
