@@ -132,7 +132,7 @@ sub process_image{
 		unless (-d $image_dst_dir){
 			# create directory
 			log_it("Creating directory '$image_dst_dir'.");
-			$imagelol->system_mkdir($image_dst_dir);
+			$imagelol->system_mkdir($image_dst_dir) or return error_log("Could not create directory '$image_dst_dir'.");
 		}
 
 		# Check if destination image exists
@@ -141,7 +141,7 @@ sub process_image{
 
 		# Copy image
 		log_it("Copying image '$image->{full_path}' to '$image_dst_file'.");
-		$imagelol->copy_stuff($image->{full_path}, "$image_dst_dir/");
+		$imagelol->copy_stuff($image->{full_path}, "$image_dst_dir/") or return error_log("Could not copy image '$image->{full_path}' to '$image_dst_file'.");
 
 		# Extract preview
 		# Save full version + resized version
@@ -163,7 +163,7 @@ sub process_image{
 		unless (-d $preview_dst_dir){
 			# create directory
 			log_it("Creating directory '$preview_dst_dir'.");
-			$imagelol->system_mkdir($preview_dst_dir);
+			$imagelol->system_mkdir($preview_dst_dir) or return error_log("Could not create directory image '$preview_dst_dir'.");
 		}
 
 		# Make filename of preview
@@ -186,11 +186,11 @@ sub process_image{
 			}
 		} else {
 			# Copy normally, as source is non-RAW
-			$imagelol->copy_stuff($image->{full_path}, $jpg_dst);
+			$imagelol->copy_stuff($image->{full_path}, $jpg_dst) or return error_log("Could not copy image '$image->{full_path}' to '$jpg_dst'.");
 		}
 
 		# Copy EXIF-data from source, into preview
-		$imagelol->copy_exif($image->{full_path}, $jpg_dst);
+		$imagelol->copy_exif($image->{full_path}, $jpg_dst) or return error_log("Could not copy EXIF data from '$image->{full_path}' to '$jpg_dst'.");
 
 		# Rotate full preview (if needed)
 		# http://sylvana.net/jpegcrop/exif_orientation.html
@@ -200,13 +200,16 @@ sub process_image{
 		if (defined($exif_tags->{'Orientation'})){
 			$rotate = 0 if ($exif_tags->{'Orientation'} == 1);
 		}
-		$imagelol->rotate_image($jpg_dst, $jpg_dst) if $rotate;
+		if($rotate){
+			$imagelol->rotate_image($jpg_dst, $jpg_dst) or return error_log("Could not rotate image '$jpg_dst'.");
+		}
 		
 		# Add to image hash, so we can add to DB later on
 		my %image_info : shared = (
 			image_file => $image->{image_file},
 			original_file => "$image_dst_dir/$image->{image_file}",
 			preview_file => $jpg_dst,
+			import_file => $image->{full_path},
 			full_date => $full_date,
 			category => $category,
 		);
@@ -245,9 +248,21 @@ sub db_add_images{
 						$images{$imageid}->{preview_file} )){
 			# All OK
 			log_it("Added image '$images{$imageid}->{image_file}' to the DB.");
+			
+			# At this point we successfully copied the image, extracted the preview
+			# and added it to the database. We should now delete the temporary file from 
+			# the import directory.
+			if (-e $images{$imageid}->{import_file}){
+				# The file actually exists, lets delete it.
+				$imagelol->system_rm($images{$imageid}->{import_file}) or return error_log("Could not delete import image '$images{$imageid}->{import_file}'.");
+			} else {
+				# File does not exist... means it's been removed after it was
+				# read, and before we are at this point. Should not happen.
+				error_log("Import-file '$images{$imageid}->{import_file}' is gone. Cannot delete. This should not happen.");
+			}
 		} else {
 			# Something went wrong adding
-			error_log("Could not add image '$images{$imageid}->{image_file}' to the DB.");
+			return error_log("Could not add image '$images{$imageid}->{image_file}' to the DB.");
 			
 			# TODO: do something about this -- print report at end of run or whatever
 		}

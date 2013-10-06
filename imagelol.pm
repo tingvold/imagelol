@@ -198,10 +198,12 @@ sub system_chmod{
 	my ($dst, $mask, $recursive) = @_;
 	
 	if ($recursive){
-		(system("$config{binaries}->{chmod} -R $mask $dst") == 0) or die("Could not chmod $dst.");
+		(system("$config{binaries}->{chmod} -R $mask $dst") == 0) or return 0;
 	} else {
-		(system("$config{binaries}->{chmod} $mask $dst") == 0) or die("Could not chmod $dst.");
+		(system("$config{binaries}->{chmod} $mask $dst") == 0) or return 0;
 	}
+	
+	return 1;
 }
 
 # Chown
@@ -213,10 +215,12 @@ sub system_chown{
 	my ($dst, $uid, $gid, $recursive) = @_;
 	
 	if ($recursive){
-		(system("$config{binaries}->{chown} -R $uid:$gid $dst") == 0) or die("Could not chown $dst.");
+		(system("$config{binaries}->{chown} -R $uid:$gid $dst") == 0) or return 0;
 	} else {
-		(system("$config{binaries}->{chown} $uid:$gid $dst") == 0) or die("Could not chown $dst.");
+		(system("$config{binaries}->{chown} $uid:$gid $dst") == 0) or return 0;
 	}
+	
+	return 1;
 }
 
 # Scp
@@ -236,7 +240,26 @@ sub system_scp{
 	# NOTE: if this subroutine is to be used in a script that is run by the system automatically
 	# f.ex. in a cron-job, it implies that the user the script is run as, has pubkeys (or other 
 	# means of passwordless access to the host in question).
-	(system("$config{binaries}->{scp} $parameters $src $dest") == 0) or die("Could not copy files with scp.");
+	(system("$config{binaries}->{scp} $parameters $src $dest") == 0) or return 0;
+	return 1;
+}
+
+# rm
+sub system_rm{
+	if ($_[0] =~ m/HASH/){
+		#Value is a reference on an anonymous hash
+		shift; # Remove class that is passed to the subroutine
+	}
+	
+	my ($dst, $recursive) = @_;
+	$recursive = 0; # we don't really want this
+	
+	if ($recursive){
+		(system("$config{binaries}->{rm} -rf $dst 2> /dev/null") == 0) or return 0;
+	} else {
+		(system("$config{binaries}->{rm} $dst 2> /dev/null") == 0) or return 0;
+	}
+	return 1;
 }
 
 # Copies stuff
@@ -245,7 +268,8 @@ sub copy_stuff{
 	my ($source, $dest) = @_;
 	
 	debug_log("Copying '$source' to '$dest'...");
-	(system("$config{binaries}->{cp} -p $source $dest") == 0) or die error_log("Copy of file '$source' to '$dest' failed.");
+	(system("$config{binaries}->{cp} -p $source $dest") == 0) or return 0;
+	return 1;
 }
 
 # Create dir
@@ -256,7 +280,8 @@ sub system_mkdir{
 	}
 	my $dir = "@_";
 	
-	(system("$config{binaries}->{mkdir} -p $dir") == 0) or die("Could not create directory '$dir'.");
+	(system("$config{binaries}->{mkdir} -p $dir") == 0) or return 0;
+	return 1;
 }
 
 # Resize image
