@@ -22,6 +22,11 @@
 	default_category = 6D
 </div>
 
+<image>
+	medium_width = 1024
+	medium_height = 768
+</image>
+
 <binaries>
 	chown = /bin/chown
 	chmod = /bin/chmod
