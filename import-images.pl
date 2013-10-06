@@ -138,7 +138,7 @@ sub process_images{
 			die error_log("Destination file ($image_dst_file) exists. Aborting.") if (-e $image_dst_file);
 
 			# Copy image
-			log_it("Copying image '$image_full_path' to '$image_dst_file'.");
+			log_it("Copying image '$image->{full_path}' to '$image_dst_file'.");
 			$imagelol->copy_stuff($image->{full_path}, "$image_dst_dir/");
 
 			# Extract preview
@@ -149,8 +149,9 @@ sub process_images{
 			die error_log("No preview found.") unless defined($exif_tags->{'PreviewImage'});
 
 			# Fetch JPG
+			my $jpg_from_raw;
 			if ($is_raw){
-				my $jpg_from_raw = $exif_tags->{'PreviewImage'};
+				$jpg_from_raw = $exif_tags->{'PreviewImage'};
 				$jpg_from_raw = $$jpg_from_raw if ref($jpg_from_raw);
 			}
 
@@ -188,7 +189,7 @@ sub process_images{
 				}
 			} else {
 				# Copy normally, as source is non-RAW
-				$imagelol->copy_stuff($image_full_path, $jpg_dst_full);
+				$imagelol->copy_stuff($image->{full_path}, $jpg_dst_full);
 			}
 
 			# Copy EXIF-data from source, into preview
