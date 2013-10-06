@@ -77,7 +77,7 @@ sub image_queue{
 
 # Process single image
 sub process_image{
-	my $image = shift;
+	my ($image, $dbh) = @_;
 	
 	if ($image->{image_file} =~ m/^.+\.($config{div}->{image_filenames})$/i){
 		# We have a image (or, at least a filename that matches the image_filenames variable)
@@ -202,7 +202,7 @@ sub process_image{
 		$imagelol->rotate_image($jpg_dst, $jpg_dst) if $rotate;
 		
 		# Add to database
-		unless($imagelol->db_add_image($image->{image_file}, $image->{full_path}, $full_date, $category)){
+		unless($imagelol->db_add_image($dbh, $image->{image_file}, $image->{full_path}, $full_date, $category)){
 			# Something went wrong adding
 			error_log("LOLWAT");
 			# TODO: do something about this -- print report at end of run or whatever
@@ -217,10 +217,12 @@ sub process_image{
 
 # Copy images
 sub process_images{
+	my $dbh = shift;
+	
 	while (my $image = $imageq->dequeue()){
 		last if ($image eq 'DONE');	# all done
 		
-		if(process_image($image)){
+		if(process_image($image, $dbh)){
 			log_it("Successfully processed image $image->{image_file}.");
 		} else {
 			log_it("Something went wrong when processing image $image->{image_file}.")
@@ -248,7 +250,13 @@ find_images();
 $imageq->enqueue("DONE") for (1..$max_threads);
 
 # Start processing the queue
-threads->create("process_images") for (1..$max_threads);
+foreach (1..$max_threads){
+	# Create DB-worker for each thread
+	my $dbh = $imagelol->{_dbh}->clone();
+	
+	# Create threads
+	threads->create("process_images", $dbh);
+}
 
 # Wait till all threads is done
 sleep 5 while (threads->list(threads::running));

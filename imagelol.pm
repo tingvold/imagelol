@@ -298,9 +298,8 @@ sub copy_exif{
 # Add image to database
 sub db_add_image{
 	my $self = shift;
-	my ($imagename, $path, $imagedate, $category) = @_;
+	my ($dbh, $imagename, $path, $imagedate, $category) = @_;
 	
-	my $dbh = $self->{_dbh}->clone();
 	my $sth = $dbh->prepare($sql_statements->{add_image});
 	$sth->execute($imagename, $path, $imagedate, $category);
 	$sth->finish();
