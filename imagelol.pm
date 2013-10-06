@@ -300,9 +300,9 @@ sub db_add_image{
 	my $self = shift;
 	my ($imagename, $path, $imagedate, $category) = @_;
 
-	$self->{_sth} = $self->{_dbh}->prepare($sql_statements->{add_image});
-	$self->{_sth}->execute($imagename, $path, $imagedate, $category);
-	$self->{_sth}->finish();
+	my $sth = $self->{_dbh}->prepare($sql_statements->{add_image});
+	$sth->execute($imagename, $path, $imagedate, $category);
+	$sth->finish();
 	
 	if($self->{_sth}->err){
 		error_log("imagelol", "Something went wrong when trying to add image '$imagename' to DB.");

@@ -15,7 +15,7 @@ my $imagelol_dir;
 BEGIN { $imagelol_dir = "/srv/bilder/imagelol"; }
 use lib $imagelol_dir;
 use imagelol;
-my $imagelol : shared = imagelol->new();
+my $imagelol = imagelol->new();
 my %config = $imagelol->get_config();
 
 # Variables
