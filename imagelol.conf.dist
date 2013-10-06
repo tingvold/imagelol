@@ -12,19 +12,15 @@
 	import_folder = /srv/bilder/import
 	original_folder = /srv/bilder/arkiv/original
 	preview_folder = /srv/bilder/arkiv/preview
-	default_category = 6D
 </path>
 
 <div>
 	imagelol_uid = jocke
 	imagelol_gid = bilder
-	image_filenames = CR2|jpg|jpeg
+	image_filenames = cr2|jpg|jpeg
+	raw_image = cr2
+	default_category = 6D
 </div>
-
-<image>
-	medium_width = 1024
-	medium_height = 768
-</image>
 
 <binaries>
 	chown = /bin/chown
