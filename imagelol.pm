@@ -47,6 +47,12 @@ my $sql_statements = {
 
 					WHERE 	(imageid = ?)
 				",
+	get_album =>		"	SELECT 	*
+
+					FROM 	albums
+
+					WHERE 	(name = ?)
+				",
 };
 
 # Create class
@@ -353,35 +359,86 @@ sub db_add_image{
 # Get range of images
 sub get_image_range{
 	my $self = shift;
-	my $img_range = shift
+	my ($img_range, $path_search) = @_;
+	my $query = qq( SELECT * FROM images WHERE (path_original LIKE '%$path_search%') );
+	$query .= 'AND (';
 	
+	my $first = 1;
+	my $valid_ranges = 0;
 	my @img_ranges = split(',', $img_range);
 	foreach my $range (@img_ranges){
-		if($range =~ m/^[0-9]+\-[0-9]+$/){
+		if($range =~ m/^$config{regex}->{range}$/){
 			# a range, XXXX-YYYY
 			my ($range_start, $range_end) = split('-', $range);
 			if($range_start == $range_end){
 				# range start and end is the same
 				# this is the same as a single image
-				add_image_single();
+				if($first){
+					$query .= qq( (imagenumber = $range_start) );
+					$first = 0;
+				} else {
+					$query .= qq( OR (imagenumber = $range_start) );
+				}
+				$valid_ranges++;
 			} elsif($range_start > $range_end){
 				# start is bigger than end, lets ignore
-				log_it("'$range' starts with bigger number than what it ends with. Ignoring.");
+				log_it("imagelol", "'$range' starts with bigger number than what it ends with. Ignoring.");
 				next;
 			} else {
 				# Only scenario here should be if $range_end is bigger than $range_start
 				# This is how it should be, so we proceed.
-				add_image_range();
+				if($first){
+					$query .= qq( (imagenumber BETWEEN $range_start AND $range_end) );
+					$first = 0;
+				} else {
+					$query .= qq( OR (imagenumber BETWEEN $range_start AND $range_end) );
+				}
+				$valid_ranges++;
 			}
-		} elsif ($range =~ m/^[0-9]+$/){
+		} elsif ($range =~ m/^$config{regex}->{single}$/){
 			# single image
-			add_image_single();
+			if($first){
+				$query .= qq( (imagenumber = $range) );
+				$first = 0;
+			} else {
+				$query .= qq( OR (imagenumber = $range) );
+			}
+			$valid_ranges++;
 		} else {
 			# not valid
-			log_it("'$range' is not a valid IMG-range. Ignoring.");
+			log_it("imagelol", "'$range' is not a valid IMG-range. Ignoring.");
 			next;
 		}
 	}
+	
+	unless($valid_ranges > 0){
+		error_log("imagelol", "No valid ranges.");
+		return 0;
+	}
+	
+	$query .= ' ) ORDER BY imagenumber ASC';
+	
+	$self->{_sth} = $self->{_dbh}->prepare($query);
+	$self->{_sth}->execute();
+	
+	my $images = $self->{_sth}->fetchall_hashref("imageid");
+	$self->{_sth}->finish();
+	
+	return $images;
+}
+
+# Fetch album info
+sub get_album{
+	my $self = shift;
+	my $album = shift;
+	
+	$self->{_sth} = $self->{_dbh}->prepare($sql_statements->{get_album});
+	$self->{_sth}->execute($album);
+	
+	my $albuminfo = $self->{_sth}->fetchrow_hashref();
+	$self->{_sth}->finish();
+	
+	return $albuminfo;	
 }
 
 # Get all images
@@ -405,6 +462,14 @@ sub set_imagenumber{
 	$self->{_sth} = $self->{_dbh}->prepare($sql_statements->{set_imagenumber});
 	$self->{_sth}->execute($imagenumber, $imageid);
 	$self->{_sth}->finish();
+	
+	# my $images = $imagelol->get_images();
+	# 
+	# foreach my $image ( sort keys %$images ){
+	# 	(my $imagenumber = $images->{$image}->{imagename}) =~ s/^IMG_([0-9]+)\.CR2$/$1/;
+	# 	print "Setting imagenumber ($images->{$image}->{imagename} -> $imagenumber)\n";
+	# 	$imagelol->set_imagenumber($image, $imagenumber);
+	# }
 }
 
 

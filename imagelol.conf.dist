@@ -24,6 +24,10 @@
 
 <regex>
 	imagenumber = IMG_([0-9]+)\\.CR2
+	album_name = [a-zA-Z0-9\\ \\.\\-\\_\\&\\(\\)\\[\\]]+
+	img_range = [0-9\\,\\-]+
+	range = [0-9]+\\-[0-9]+
+	single = [0-9]+
 </regex>
 
 <db>
