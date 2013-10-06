@@ -30,7 +30,7 @@ my $error = 0;
 
 my $sql_statements = {
 	add_image =>		"	INSERT 	INTO images
-						(imagename, path, imagedate, category)
+						(imagename, path_original, imagedate, category, path_preview)
 
 					VALUES 	(?, ?, ?, ?)	
 				",
@@ -298,10 +298,10 @@ sub copy_exif{
 # Add image to database
 sub db_add_image{
 	my $self = shift;
-	my ($imagename, $path, $imagedate, $category) = @_;
+	my ($imagename, $original_path, $imagedate, $category, $preview_path) = @_;
 	
 	$self->{_sth} = $self->{_dbh}->prepare($sql_statements->{add_image});
-	$self->{_sth}->execute($imagename, $path, $imagedate, $category);
+	$self->{_sth}->execute($imagename, $original_path, $imagedate, $category, $preview_path);
 	$self->{_sth}->finish();
 	
 	if($self->{_sth}->err){

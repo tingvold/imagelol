@@ -204,8 +204,9 @@ sub process_image{
 		
 		# Add to image hash, so we can add to DB later on
 		my %image_info : shared = (
-			full_path => $image->{full_path},
 			image_file => $image->{image_file},
+			original_file => "$image_dst_dir/$image->{image_file}",
+			preview_file => $jpg_dst,
 			full_date => $full_date,
 			category => $category,
 		);
@@ -237,7 +238,11 @@ sub process_images{
 # Add images to database
 sub db_add_images{
 	foreach my $imageid ( sort keys %images ){
-		unless($imagelol->db_add_image($images{$imageid}->{image_file}, $images{$imageid}->{full_path}, $images{$imageid}->{full_date}, $images{$imageid}->{category})){
+		unless($imagelol->db_add_image(	$images{$imageid}->{image_file},
+						$images{$imageid}->{original_file},
+						$images{$imageid}->{full_date},
+						$images{$imageid}->{category},
+						$images{$imageid}->{preview_file} )){
 			# Something went wrong adding
 			error_log("LOLWAT");
 			# TODO: do something about this -- print report at end of run or whatever
