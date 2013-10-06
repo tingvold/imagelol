@@ -202,7 +202,7 @@ sub process_image{
 		$imagelol->rotate_image($jpg_dst, $jpg_dst) if $rotate;
 		
 		# Add to database
-		db_add_image($image->{image_file}, $image->{full_path}, $full_date, $category);
+		$imagelol->db_add_image($image->{image_file}, $image->{full_path}, $full_date, $category);
 		
 		# Done
 		return 1;
