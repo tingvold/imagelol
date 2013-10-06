@@ -8,7 +8,10 @@ use Fcntl qw(:flock);
 
 # Define imagelol-dir, and add it to %INC
 my $imagelol_dir;
-BEGIN { $imagelol_dir = "/srv/bilder/imagelol"; }
+BEGIN {
+	use FindBin;
+	$imagelol_dir = "$FindBin::Bin"; # Assume working-folder is the path where this script resides
+}
 use lib $imagelol_dir;
 
 package imagelol;
@@ -30,9 +33,19 @@ my $error = 0;
 
 my $sql_statements = {
 	add_image =>		"	INSERT 	INTO images
-						(imagename, path_original, imagedate, category, path_preview)
+						(imagename, path_original, imagedate, category, path_preview, imagenumber)
 
-					VALUES 	(?, ?, ?, ?, ?)	
+					VALUES 	(?, ?, ?, ?, ?, ?)	
+				",
+	get_images =>		"	SELECT	*
+	
+					FROM	images
+				",
+	set_imagenumber =>	"	UPDATE 	images
+
+					SET 	imagenumber = (?)
+
+					WHERE 	(imageid = ?)
 				",
 };
 
@@ -323,10 +336,10 @@ sub copy_exif{
 # Add image to database
 sub db_add_image{
 	my $self = shift;
-	my ($imagename, $original_path, $imagedate, $category, $preview_path) = @_;
+	my ($imagename, $original_path, $imagedate, $category, $preview_path, $imagenumber) = @_;
 	
 	$self->{_sth} = $self->{_dbh}->prepare($sql_statements->{add_image});
-	$self->{_sth}->execute($imagename, $original_path, $imagedate, $category, $preview_path);
+	$self->{_sth}->execute($imagename, $original_path, $imagedate, $category, $preview_path, $imagenumber);
 	$self->{_sth}->finish();
 	
 	if($self->{_sth}->err){
@@ -337,7 +350,62 @@ sub db_add_image{
 	}
 }
 
+# Get range of images
+sub get_image_range{
+	my $self = shift;
+	my $img_range = shift
+	
+	my @img_ranges = split(',', $img_range);
+	foreach my $range (@img_ranges){
+		if($range =~ m/^[0-9]+\-[0-9]+$/){
+			# a range, XXXX-YYYY
+			my ($range_start, $range_end) = split('-', $range);
+			if($range_start == $range_end){
+				# range start and end is the same
+				# this is the same as a single image
+				add_image_single();
+			} elsif($range_start > $range_end){
+				# start is bigger than end, lets ignore
+				log_it("'$range' starts with bigger number than what it ends with. Ignoring.");
+				next;
+			} else {
+				# Only scenario here should be if $range_end is bigger than $range_start
+				# This is how it should be, so we proceed.
+				add_image_range();
+			}
+		} elsif ($range =~ m/^[0-9]+$/){
+			# single image
+			add_image_single();
+		} else {
+			# not valid
+			log_it("'$range' is not a valid IMG-range. Ignoring.");
+			next;
+		}
+	}
+}
 
+# Get all images
+sub get_images{
+	my $self = shift;
+	
+	$self->{_sth} = $self->{_dbh}->prepare($sql_statements->{get_images});
+	$self->{_sth}->execute();
+	
+	my $images = $self->{_sth}->fetchall_hashref("imageid");
+	$self->{_sth}->finish();
+	
+	return $images;
+}
+
+# Set imagenumber
+sub set_imagenumber{
+	my $self = shift;
+	my ($imageid, $imagenumber) = @_;
+
+	$self->{_sth} = $self->{_dbh}->prepare($sql_statements->{set_imagenumber});
+	$self->{_sth}->execute($imagenumber, $imageid);
+	$self->{_sth}->finish();
+}
 
 
 1;

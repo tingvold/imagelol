@@ -241,11 +241,14 @@ sub process_images{
 # Add images to database
 sub db_add_images{
 	foreach my $imageid ( sort keys %images ){
+		(my $imagenumber = $images{$imageid}->{image_file}) =~ s/^$config{regex}->{imagenumber}$/$1/;
+		
 		if($imagelol->db_add_image(	$images{$imageid}->{image_file},
 						$images{$imageid}->{original_file},
 						$images{$imageid}->{full_date},
 						$images{$imageid}->{category},
-						$images{$imageid}->{preview_file} )){
+						$images{$imageid}->{preview_file},
+						$imagenumber )){
 			# All OK
 			log_it("Added image '$images{$imageid}->{image_file}' to the DB.");
 			
