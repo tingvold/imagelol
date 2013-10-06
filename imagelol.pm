@@ -303,6 +303,8 @@ sub db_add_image{
 	$self->{_sth} = $self->{_dbh}->prepare($sql_statements->{add_image});
 	$self->{_sth}->execute($imagename, $path, $imagedate, $category);
 	$self->{_sth}->finish();
+	
+	return 1;
 }
 
 
