@@ -22,10 +22,13 @@
 	default_category = 6D
 </div>
 
-<image>
-	medium_width = 1024
-	medium_height = 768
-</image>
+<db>
+	hostname = localhost
+	port = 5432
+	database = imagelol
+	username = imagelol
+	password = supersecret
+</db>
 
 <binaries>
 	chown = /bin/chown

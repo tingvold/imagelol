@@ -76,7 +76,7 @@ sub image_queue{
 	);
 	
 	# Add image to queue
-	$imageq->enqueue(\%image);
+	$imageq->enqueue(\%image) unless ($_ =~ m/^\.$/); # don't do anything with the "current dir" match
 }
 
 # Process single image
