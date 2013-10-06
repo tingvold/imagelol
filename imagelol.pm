@@ -174,7 +174,7 @@ sub connect{
 	#if (pingable($config{db}->{hostname})){
 	if (1){
 		$self->{_dbh} = DBI->connect(	"DBI:Pg:dbname=$config{db}->{database};host=$config{db}->{hostname};port=$config{db}->{port};sslmode=require",
-						"$config{db}->{username}", "$config{db}->{password}", {'RaiseError' => 1}) 
+						"$config{db}->{username}", "$config{db}->{password}", {'RaiseError' => 0}) 
 				or die log_it("imagelol", "Got error $DBI::errstr when connecting to database.");
 	} else {
 		error_log("imagelol", "Could not ping database-server.");
@@ -304,7 +304,12 @@ sub db_add_image{
 	$self->{_sth}->execute($imagename, $path, $imagedate, $category);
 	$self->{_sth}->finish();
 	
-	return 1;
+	if($self->{_sth}->err){
+		error_log("imagelol", "Something went wrong when trying to add image '$imagename' to DB.");
+		return 0;
+	} else {
+		return 1;
+	}
 }
 
 

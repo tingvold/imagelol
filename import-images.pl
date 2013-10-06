@@ -204,7 +204,7 @@ sub process_image{
 		# Add to database
 		unless($imagelol->db_add_image($image->{image_file}, $image->{full_path}, $full_date, $category)){
 			# Something went wrong adding
-			
+			error_log("LOLWAT");
 			# TODO: do something about this -- print report at end of run or whatever
 		}
 		
