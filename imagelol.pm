@@ -174,7 +174,7 @@ sub connect{
 	#if (pingable($config{db}->{hostname})){
 	if (1){
 		$self->{_dbh} = DBI->connect(	"DBI:Pg:dbname=$config{db}->{database};host=$config{db}->{hostname};port=$config{db}->{port};sslmode=require",
-						"$config{db}->{username}", "$config{db}->{password}", {'RaiseError' => 0}) 
+						"$config{db}->{username}", "$config{db}->{password}", {'RaiseError' => 0, 'AutoInactiveDestroy' => 1}) 
 				or die log_it("imagelol", "Got error $DBI::errstr when connecting to database.");
 	} else {
 		error_log("imagelol", "Could not ping database-server.");
@@ -299,13 +299,15 @@ sub copy_exif{
 sub db_add_image{
 	my $self = shift;
 	my ($imagename, $path, $imagedate, $category) = @_;
-
-	my $sth = $self->{_dbh}->prepare($sql_statements->{add_image});
+	
+	my $dbh = $self->{_dbh}->clone();
+	my $sth = $dbh->prepare($sql_statements->{add_image});
 	$sth->execute($imagename, $path, $imagedate, $category);
 	$sth->finish();
+	undef($dbh);
 	
-	if($self->{_sth}->err){
-		error_log("imagelol", "Something went wrong when trying to add image '$imagename' to DB.");
+	if($sth->err){
+		error_log("imagelol", "Something went wrong when trying to add image '$imagename' to DB; $sth->errstr");
 		return 0;
 	} else {
 		return 1;
