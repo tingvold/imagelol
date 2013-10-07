@@ -46,7 +46,10 @@ if (@ARGV > 0) {
 ## - List albums (in hiarchy, so nested albums are displayed under each other)
 ## - Adding albums without images (to use for nested albums/sub-albums)
 ## 	- Use recursion to build the trees/folder-structure for the albums/sub-albums
-## - 
+## - Maybe a way to actually _add_ $img_range to current $img_range. This might be needed if
+##   we want to add several $img_range with different $path_search, f.ex. if an event is part
+##   of two months. This means we would have to do the $path_search for the year only, and the
+##   likelyhood for taking more than 9999 images in one year is high.
 
 # Add images to album -- create album if needed
 sub fix_album{
