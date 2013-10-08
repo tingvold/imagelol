@@ -53,6 +53,53 @@ my $sql_statements = {
 
 					WHERE 	(name = ?)
 				",
+	disable_album_ranges =>	"	UPDATE 	album_ranges
+
+					SET 	enabled = false
+
+					WHERE 	(albumid = ?)
+				",
+	get_album_ranges =>	"	SELECT	*
+	
+					FROM	album_ranges
+					
+					WHERE	(albumid = ?)
+						AND (enabled = true)
+				",
+	add_album_range =>	"	INSERT	INTO album_ranges
+						(imagerange, albumid, path_search)
+						
+					VALUES	(?, ?, ?)
+				",
+	get_album_images =>	"	SELECT	*
+
+					FROM	images i
+						INNER JOIN album_images ai ON i.imageid = ai.imageid
+					
+					WHERE	(ai.albumid = ?)
+				",
+				
+	delete_image =>		"	DELETE 	FROM album_images
+
+					WHERE 	(imageid = ?)
+						AND (albumid = ?)
+				",
+	add_image =>		"	INSERT	INTO album_images
+						(imageid, albumid)
+
+					VALUES	(?, ?)
+				",
+	set_album_desc =>	"	UPDATE 	albums
+
+					SET 	description = (?)
+
+					WHERE 	(albumid = ?)
+				",
+	add_album =>		"	INSERT	INTO albums
+						(name, description, parent)
+
+					VALUES	(?, ?, ?)
+				",
 };
 
 # Create class
@@ -472,5 +519,97 @@ sub set_imagenumber{
 	# }
 }
 
+# Disable all album ranges
+sub disable_album_ranges{
+	my $self = shift;
+	my $albumid = shift;
+	
+	$self->{_sth} = $self->{_dbh}->prepare($sql_statements->{disable_album_ranges});
+	$self->{_sth}->execute($albumid);
+	$self->{_sth}->finish();
+}
+
+# Get all enabled album ranges
+sub get_album_ranges{
+	my $self = shift;
+	my $albumid = shift;
+	
+	$self->{_sth} = $self->{_dbh}->prepare($sql_statements->{get_album_ranges});
+	$self->{_sth}->execute($albumid);
+	
+	my $ranges = $self->{_sth}->fetchall_hashref("rangeid");
+	$self->{_sth}->finish();
+	
+	return $ranges;
+}
+
+# Add album range
+sub add_album_range{
+	my $self = shift;
+	my ($albumid, $img_range, $path_search) = @_;
+	
+	$self->{_sth} = $self->{_dbh}->prepare($sql_statements->{add_album_range});
+	$self->{_sth}->execute($img_range, $albumid, $path_search);
+	$self->{_sth}->finish();
+}
+
+# Get images for an album
+sub get_album_images{
+	my $self = shift;
+	my $albumid = shift;
+	
+	$self->{_sth} = $self->{_dbh}->prepare($sql_statements->{get_album_images});
+	$self->{_sth}->execute($albumid);
+	
+	my $images = $self->{_sth}->fetchall_hashref("imageid");
+	$self->{_sth}->finish();
+	
+	return $images;
+}
+
+# Delete image
+sub delete_image{
+	my $self = shift;
+	my ($imageid, $albumid) = @_;
+	
+	$self->{_sth} = $self->{_dbh}->prepare($sql_statements->{delete_image});
+	$self->{_sth}->execute($imageid, $albumid);
+	$self->{_sth}->finish();
+}
+
+# Add image
+sub add_image{
+	my $self = shift;
+	my ($imageid, $albumid) = @_;
+	
+	$self->{_sth} = $self->{_dbh}->prepare($sql_statements->{add_image});
+	$self->{_sth}->execute($imageid, $albumid);
+	$self->{_sth}->finish();
+}
+
+# Add album
+sub add_album{
+	my $self = shift;
+	my ($album_name, $album_description, $parent_albumid) = @_;
+	
+	# TODO: fix support for nested albums
+	
+	$self->{_sth} = $self->{_dbh}->prepare($sql_statements->{add_album});
+	$self->{_sth}->execute($album_name, $album_description, $parent_albumid);
+	my $albumid = $self->{_dbh}->last_insert_id(undef,undef,undef,undef,{sequence=>'albums_albumid_seq'});
+	$self->{_sth}->finish();
+	
+	return $albumid;
+}
+
+# Change album description
+sub set_album_description{
+	my $self = shift;
+	my ($albumid, $album_description) = @_;
+	
+	$self->{_sth} = $self->{_dbh}->prepare($sql_statements->{set_album_desc});
+	$self->{_sth}->execute($album_description, $albumid);
+	$self->{_sth}->finish();
+}
 
 1;
