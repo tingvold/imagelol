@@ -51,7 +51,7 @@ if (@ARGV > 0) {
 
 # Set paths from config, unless provided as parameter
 if ($category){
-	die error_log("Invalid category. Only numbers and letters allowed.") unless ($category =~ m/^[a-zA-Z0-9]$/);
+	die error_log("Invalid category. Only numbers and letters allowed.") unless ($category =~ m/^[a-zA-Z0-9]+$/);
 }
 
 $category = $config{div}->{default_category} unless $category;
@@ -69,7 +69,7 @@ sub find_images{
 # Add images to queue
 sub image_queue{
 	my $org_src = "$File::Find::name";
-	my $filename = "$_",
+	my $filename = "$_";
 	
 	my $pretty_filename = $filename;
 	$pretty_filename =~ s/[^\w\_\.]/_/g;	# remove all non-alphanumeric, replace with lowerscore
@@ -83,7 +83,7 @@ sub image_queue{
 	);
 	
 	# Add image to queue
-	unless ($_ =~ m/^\.$/);
+	unless ($_ =~ m/^\.$/){
 		# don't do anything with folders
 		$imageq->enqueue(\%image);
 	}
