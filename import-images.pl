@@ -68,32 +68,44 @@ sub find_images{
 
 # Add images to queue
 sub image_queue{
+	my $org_src = "$File::Find::name";
+	my $filename = "$_",
+	
+	my $pretty_filename = $filename;
+	$pretty_filename =~ s/[^\w\_\.]/_/g;	# remove all non-alphanumeric, replace with lowerscore
+	$pretty_filename =~ s/\_+/_/g;		# replace all double-lowerscores with a single lowerscore
+	$pretty_filename =~ s/([^\w]){2,}/$1/g;	# replace all double-or-more non-alphanumeric with a single char
+	
 	my %image = (
-		full_path => "$File::Find::name",
-		image_file => "$_",
+		org_src => $org_src,
+		filename => $filename,
+		pretty_filename => $pretty_filename,
 	);
 	
 	# Add image to queue
-	$imageq->enqueue(\%image) unless ($_ =~ m/^\.$/); # don't do anything with the "current dir" match
+	unless ($_ =~ m/^\.$/);
+		# don't do anything with folders
+		$imageq->enqueue(\%image);
+	}
 }
 
 # Process single image
 sub process_image{
 	my $image = shift;
 	
-	if (	$image->{image_file} =~ m/^.+\.($config{div}->{image_filenames})$/i ||
-		$image->{image_file} =~ m/^.+\.($config{div}->{movie_filenames})$/i){
+	if (	$image->{filename} =~ m/^.+\.($config{div}->{image_filenames})$/i ||
+		$image->{filename} =~ m/^.+\.($config{div}->{movie_filenames})$/i){
 		# We have a image (or, at least a filename that matches the image_filenames variable)
-		
-		log_it("Processing image $image->{image_file}...");
+
+		log_it("Processing image $image->{filename}...");
 		
 		# Is this a RAW image? (affects what we do with preview, etc)
 		my $is_raw = 0;
-		$is_raw = 1 if ($image->{image_file} =~ m/^.+\.($config{div}->{raw_image})$/i);
+		$is_raw = 1 if ($image->{filename} =~ m/^.+\.($config{div}->{raw_image})$/i);
 
 		# We need to figure out the date the picture was taken
 		# First we try to use EXIF, and if that fails, we use the 'file created'
-		my $exif_tags = Image::ExifTool::ImageInfo(	$image->{full_path}, { PrintConv => 0 },
+		my $exif_tags = Image::ExifTool::ImageInfo(	$image->{org_src}, { PrintConv => 0 },
 								'DateTimeOriginal','PreviewImage','Orientation');
 								### TODO, if the above fails, we need to fetch specific
 								### tags depending on wether or not it's a raw file
@@ -120,8 +132,8 @@ sub process_image{
 			# File creation:	stat($_)->ctime
 
 			# Use YYYY:MM:DD, so that it's the same output as EXIF
-			$date = POSIX::strftime("%Y:%m:%d", localtime(stat($image->{full_path})->ctime()));
-			$full_date = POSIX::strftime("%Y-%m-%d %H:%M:%S", localtime(stat($image->{full_path})->ctime()));
+			$date = POSIX::strftime("%Y:%m:%d", localtime(stat($image->{org_src})->ctime()));
+			$full_date = POSIX::strftime("%Y-%m-%d %H:%M:%S", localtime(stat($image->{org_src})->ctime()));
 		}		
 
 		# At this point it should be safe to assume that $date
@@ -134,30 +146,38 @@ sub process_image{
 		unless (-d $image_dst_dir){
 			# create directory
 			log_it("Creating directory '$image_dst_dir'.");
-			$imagelol->system_mkdir($image_dst_dir) or return error_log("Could not create directory '$image_dst_dir'.");
+			$imagelol->system_mkdir($image_dst_dir)
+				or return error_log("Could not create directory '$image_dst_dir'.");
 		}
 
 		# Check if destination image exists
-		my $image_dst_file = $image_dst_dir . "/" . $image->{image_file};
+		my $image_dst_file = $image_dst_dir . "/" . $image->{pretty_filename};
 		unless ($force_copy){
-			return error_log("Destination file ($image_dst_file) exists. Aborting.") if (-e $image_dst_file);
+			if (-e $image_dst_file){
+				return error_log("Destination file ($image_dst_file) exists. Aborting.");
+			}
 		}
 
 		# Copy image
-		log_it("Copying image '$image->{full_path}' to '$image_dst_file'.");
-		$imagelol->copy_stuff($image->{full_path}, "$image_dst_dir/") or return error_log("Could not copy image '$image->{full_path}' to '$image_dst_file'.");
+		log_it("Copying image '$image->{org_src}' to '$image_dst_file'.");
+		$imagelol->copy_stuff($image->{org_src}, "$image_dst_dir/")
+			or return error_log("Could not copy image '$image->{org_src}' to '$image_dst_file'.");
 
 		# If movie, we've done enough
-		return 1 if ($image->{image_file} =~ m/^.+\.($config{div}->{movie_filenames})$/i);
+		if ($image->{filename} =~ m/^.+\.($config{div}->{movie_filenames})$/i){
+			return 1;
+		}
 
 		# Extract preview
 		# Save full version + resized version
 		my $jpg_from_raw;
 		if ($is_raw){
-			log_it("Extracting preview from RAW file.") if $is_raw;
+			log_it("Extracting preview from RAW file.");
 
 			# Exit if error
-			return error_log("No preview found.") unless defined($exif_tags->{'PreviewImage'});
+			unless (defined($exif_tags->{'PreviewImage'})){
+				return error_log("No preview found.");
+			}
 
 			# Fetch JPG
 			$jpg_from_raw = $exif_tags->{'PreviewImage'};
@@ -170,11 +190,12 @@ sub process_image{
 		unless (-d $preview_dst_dir){
 			# create directory
 			log_it("Creating directory '$preview_dst_dir'.");
-			$imagelol->system_mkdir($preview_dst_dir) or return error_log("Could not create directory image '$preview_dst_dir'.");
+			$imagelol->system_mkdir($preview_dst_dir) 
+				or return error_log("Could not create directory image '$preview_dst_dir'.");
 		}
 
 		# Make filename of preview
-		(my $jpg_filename = $image->{image_file}) =~ s/\.[^.]+$//;
+		(my $jpg_filename = $image->{pretty_filename}) =~ s/\.[^.]+$//;
 		$jpg_filename .= ".jpg";
 		my $jpg_dst = $preview_dst_dir . "/" . $jpg_filename;
 
@@ -193,11 +214,11 @@ sub process_image{
 			}
 		} else {
 			# Copy normally, as source is non-RAW
-			$imagelol->copy_stuff($image->{full_path}, $jpg_dst) or return error_log("Could not copy image '$image->{full_path}' to '$jpg_dst'.");
+			$imagelol->copy_stuff($image->{org_src}, $jpg_dst) or return error_log("Could not copy image '$image->{org_src}' to '$jpg_dst'.");
 		}
 
 		# Copy EXIF-data from source, into preview
-		$imagelol->copy_exif($image->{full_path}, $jpg_dst) or return error_log("Could not copy EXIF data from '$image->{full_path}' to '$jpg_dst'.");
+		$imagelol->copy_exif($image->{org_src}, $jpg_dst) or return error_log("Could not copy EXIF data from '$image->{org_src}' to '$jpg_dst'.");
 
 		# Rotate full preview (if needed)
 		# http://sylvana.net/jpegcrop/exif_orientation.html
@@ -213,10 +234,10 @@ sub process_image{
 		
 		# Add to image hash, so we can add to DB later on
 		my %image_info : shared = (
-			image_file => $image->{image_file},
-			original_file => "$image_dst_dir/$image->{image_file}",
+			image_file => $image->{pretty_filename},
+			original_file => $image_dst_file,
 			preview_file => $jpg_dst,
-			import_file => $image->{full_path},
+			import_file => $image->{org_src},
 			full_date => $full_date,
 			category => $category,
 		);
