@@ -160,7 +160,7 @@ sub process_image{
 
 		# Copy image
 		log_it("Copying image '$image->{org_src}' to '$image_dst_file'.");
-		$imagelol->copy_stuff($image->{org_src}, "$image_dst_dir/")
+		$imagelol->copy_stuff($image->{org_src}, $image_dst_file)
 			or return error_log("Could not copy image '$image->{org_src}' to '$image_dst_file'.");
 
 		# If movie, we've done enough
