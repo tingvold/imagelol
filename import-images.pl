@@ -40,11 +40,12 @@ sub error_log{
 }
 
 # Get options
-my ($src_dir, $dst_dir, $category);
+my ($src_dir, $dst_dir, $category, $force_copy);
 if (@ARGV > 0) {
 	GetOptions(
-	's|src|source=s'	=> \$src_dir,
-	'c|cat|category=s'	=> \$category,
+	's|src|source=s'	=> \$src_dir,		# the source of the images to be imported
+	'c|cat|category=s'	=> \$category,		# category to put the images in
+	'f|force'		=> \$force_copy,	# force copy/update, even if destination exist
 	)
 }
 
@@ -138,7 +139,9 @@ sub process_image{
 
 		# Check if destination image exists
 		my $image_dst_file = $image_dst_dir . "/" . $image->{image_file};
-		return error_log("Destination file ($image_dst_file) exists. Aborting.") if (-e $image_dst_file);
+		unless ($force_copy){
+			return error_log("Destination file ($image_dst_file) exists. Aborting.") if (-e $image_dst_file);
+		}
 
 		# Copy image
 		log_it("Copying image '$image->{full_path}' to '$image_dst_file'.");
@@ -149,6 +152,7 @@ sub process_image{
 
 		# Extract preview
 		# Save full version + resized version
+		my $jpg_from_raw;
 		if ($is_raw){
 			log_it("Extracting preview from RAW file.") if $is_raw;
 
@@ -156,7 +160,6 @@ sub process_image{
 			return error_log("No preview found.") unless defined($exif_tags->{'PreviewImage'});
 
 			# Fetch JPG
-			my $jpg_from_raw;
 			$jpg_from_raw = $exif_tags->{'PreviewImage'};
 			$jpg_from_raw = $$jpg_from_raw if ref($jpg_from_raw);
 		}
