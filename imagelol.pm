@@ -383,7 +383,7 @@ sub copy_exif{
 	
 	my ($src, $dst) = @_;
 	
-	(system("$config{binaries}->{exiftool} -q -overwrite_original -tagsfromfile \"$src\" --makernotecanon \"$dst\"") == 0) or die("Could not copy EXIF-info from '$src' to '$dst'...");
+	(system("$config{binaries}->{exiftool} -m -q -overwrite_original -tagsfromfile \"$src\" --makernotecanon \"$dst\"") == 0) or die("Could not copy EXIF-info from '$src' to '$dst'...");
 }
 
 # Add image to database
