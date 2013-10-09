@@ -241,12 +241,12 @@ sub process_image{
 			full_date => $full_date,
 			category => $category,
 		);
-		$images{$image->{full_path}} = \%image_info;
+		$images{$image->{org_src}} = \%image_info;
 		
 		# Done
 		return 1;
 	} else {
-		return error_log("Image ($image->{image_file}) didn't match our criterias. Nothing done.");
+		return error_log("Image ($image->{filename}) didn't match our criterias. Nothing done.");
 	}
 }
 
@@ -256,9 +256,9 @@ sub process_images{
 		last if ($image eq 'DONE');	# all done
 		
 		if(process_image($image)){
-			log_it("Successfully processed image $image->{image_file}.");
+			log_it("Successfully processed image $image->{filename}.");
 		} else {
-			log_it("Something went wrong when processing image $image->{image_file}.")
+			log_it("Something went wrong when processing image $image->{filename}.")
 		}
 	}
 	
