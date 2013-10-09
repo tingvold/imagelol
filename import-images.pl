@@ -149,18 +149,18 @@ sub process_image{
 
 		# Extract preview
 		# Save full version + resized version
-		log_it("Extracting preview from RAW file.") if $is_raw;
-
-		# Exit if error
-		return error_log("No preview found.") unless defined($exif_tags->{'PreviewImage'});
-
-		# Fetch JPG
-		my $jpg_from_raw;
 		if ($is_raw){
+			log_it("Extracting preview from RAW file.") if $is_raw;
+
+			# Exit if error
+			return error_log("No preview found.") unless defined($exif_tags->{'PreviewImage'});
+
+			# Fetch JPG
+			my $jpg_from_raw;
 			$jpg_from_raw = $exif_tags->{'PreviewImage'};
 			$jpg_from_raw = $$jpg_from_raw if ref($jpg_from_raw);
 		}
-
+		
 		# Create dir
 		my $preview_dst_dir = $config{path}->{preview_folder} . "/" . $category . "/" . $year . "/" . $month . "/" . $day;
 
