@@ -264,9 +264,9 @@ sub system_chmod{
 	my ($dst, $mask, $recursive) = @_;
 	
 	if ($recursive){
-		(system("$config{binaries}->{chmod} -R $mask $dst") == 0) or return 0;
+		(system("$config{binaries}->{chmod} -R $mask \"$dst\"") == 0) or return 0;
 	} else {
-		(system("$config{binaries}->{chmod} $mask $dst") == 0) or return 0;
+		(system("$config{binaries}->{chmod} $mask \"$dst\"") == 0) or return 0;
 	}
 	
 	return 1;
@@ -281,9 +281,9 @@ sub system_chown{
 	my ($dst, $uid, $gid, $recursive) = @_;
 	
 	if ($recursive){
-		(system("$config{binaries}->{chown} -R $uid:$gid $dst") == 0) or return 0;
+		(system("$config{binaries}->{chown} -R $uid:$gid \"$dst\"") == 0) or return 0;
 	} else {
-		(system("$config{binaries}->{chown} $uid:$gid $dst") == 0) or return 0;
+		(system("$config{binaries}->{chown} $uid:$gid \"$dst\"") == 0) or return 0;
 	}
 	
 	return 1;
@@ -306,7 +306,7 @@ sub system_scp{
 	# NOTE: if this subroutine is to be used in a script that is run by the system automatically
 	# f.ex. in a cron-job, it implies that the user the script is run as, has pubkeys (or other 
 	# means of passwordless access to the host in question).
-	(system("$config{binaries}->{scp} $parameters $src $dest") == 0) or return 0;
+	(system("$config{binaries}->{scp} $parameters \"$src\" \"$dest\"") == 0) or return 0;
 	return 1;
 }
 
@@ -321,9 +321,9 @@ sub system_rm{
 	$recursive = 0; # we don't really want this
 	
 	if ($recursive){
-		(system("$config{binaries}->{rm} -rf $dst 2> /dev/null") == 0) or return 0;
+		(system("$config{binaries}->{rm} -rf \"$dst\" 2> /dev/null") == 0) or return 0;
 	} else {
-		(system("$config{binaries}->{rm} $dst 2> /dev/null") == 0) or return 0;
+		(system("$config{binaries}->{rm} \"$dst\" 2> /dev/null") == 0) or return 0;
 	}
 	return 1;
 }
@@ -334,7 +334,7 @@ sub copy_stuff{
 	my ($source, $dest) = @_;
 	
 	debug_log("Copying '$source' to '$dest'...");
-	(system("$config{binaries}->{cp} -p $source $dest") == 0) or return 0;
+	(system("$config{binaries}->{cp} -p \"$source\" \"$dest\"") == 0) or return 0;
 	return 1;
 }
 
@@ -346,7 +346,7 @@ sub system_mkdir{
 	}
 	my $dir = "@_";
 	
-	(system("$config{binaries}->{mkdir} -p $dir") == 0) or return 0;
+	(system("$config{binaries}->{mkdir} -p \"$dir\"") == 0) or return 0;
 	return 1;
 }
 
@@ -359,7 +359,7 @@ sub resize_image{
 	
 	my ($width, $height, $src, $dst) = @_;
 	
-	(system("$config{binaries}->{convert} -geometry ${width}x${height} $src $dst") == 0) or die("Could not resize image '$src'...");
+	(system("$config{binaries}->{convert} -geometry ${width}x${height} \"$src\" \"$dst\"") == 0) or die("Could not resize image '$src'...");
 }
 
 # Rotate image
@@ -371,7 +371,7 @@ sub rotate_image{
 	
 	my ($src, $dst) = @_;
 	
-	(system("$config{binaries}->{convert} -auto-orient $src $dst") == 0) or die("Could not rotate image '$src'...");
+	(system("$config{binaries}->{convert} -auto-orient \"$src\" \"$dst\"") == 0) or die("Could not rotate image '$src'...");
 }
 
 # Copy EXIF info
@@ -383,7 +383,7 @@ sub copy_exif{
 	
 	my ($src, $dst) = @_;
 	
-	(system("$config{binaries}->{exiftool} -q -overwrite_original -tagsfromfile $src --makernotecanon $dst") == 0) or die("Could not copy EXIF-info from '$src' to '$dst'...");
+	(system("$config{binaries}->{exiftool} -q -overwrite_original -tagsfromfile \"$src\" --makernotecanon \"$dst\"") == 0) or die("Could not copy EXIF-info from '$src' to '$dst'...");
 }
 
 # Add image to database
