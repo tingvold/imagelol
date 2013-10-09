@@ -18,6 +18,7 @@
 	imagelol_uid = jocke
 	imagelol_gid = bilder
 	image_filenames = cr2|jpg|jpeg
+	movie_filenames = mov
 	raw_image = cr2
 	default_category = 6D
 </div>

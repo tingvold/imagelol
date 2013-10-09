@@ -80,7 +80,8 @@ sub image_queue{
 sub process_image{
 	my $image = shift;
 	
-	if ($image->{image_file} =~ m/^.+\.($config{div}->{image_filenames})$/i){
+	if (	$image->{image_file} =~ m/^.+\.($config{div}->{image_filenames})$/i ||
+		$image->{image_file} =~ m/^.+\.($config{div}->{movie_filenames})$/i){
 		# We have a image (or, at least a filename that matches the image_filenames variable)
 		
 		log_it("Processing image $image->{image_file}...");
@@ -142,6 +143,9 @@ sub process_image{
 		# Copy image
 		log_it("Copying image '$image->{full_path}' to '$image_dst_file'.");
 		$imagelol->copy_stuff($image->{full_path}, "$image_dst_dir/") or return error_log("Could not copy image '$image->{full_path}' to '$image_dst_file'.");
+
+		# If movie, we've done enough
+		return 1 if ($image->{image_file} =~ m/^.+\.($config{div}->{movie_filenames})$/i);
 
 		# Extract preview
 		# Save full version + resized version
