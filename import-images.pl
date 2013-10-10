@@ -83,7 +83,7 @@ sub image_queue{
 	);
 	
 	# Add image to queue
-	unless ($_ =~ m/^\.$/){
+	unless (-d "$org_src"){
 		# don't do anything with folders
 		$imageq->enqueue(\%image);
 	}
@@ -147,7 +147,7 @@ sub process_image{
 		my $image_dst_dir = $dst_dir . "/" . $year . "/" . $month . "/" . $day;
 		unless (-d $image_dst_dir){
 			# create directory
-			log_it("Creating directory '$image_dst_dir'.");
+			debug_log("Creating directory '$image_dst_dir'.");
 			$imagelol->system_mkdir($image_dst_dir)
 				or return error_log("Could not create directory '$image_dst_dir'.");
 		}
@@ -161,7 +161,7 @@ sub process_image{
 		}
 
 		# Copy image
-		log_it("Copying image '$image->{org_src}' to '$image_dst_file'.");
+		debug_log("Copying image '$image->{org_src}' to '$image_dst_file'.");
 		$imagelol->copy_stuff($image->{org_src}, $image_dst_file)
 			or return error_log("Could not copy image '$image->{org_src}' to '$image_dst_file'.");
 
@@ -174,7 +174,7 @@ sub process_image{
 		# Save full version + resized version
 		my $jpg_from_raw;
 		if ($is_raw){
-			log_it("Extracting preview from RAW file.");
+			debug_log("Extracting preview from RAW file.");
 
 			# Exit if error
 			unless (defined($exif_tags->{'PreviewImage'})){
@@ -191,7 +191,7 @@ sub process_image{
 
 		unless (-d $preview_dst_dir){
 			# create directory
-			log_it("Creating directory '$preview_dst_dir'.");
+			debug_log("Creating directory '$preview_dst_dir'.");
 			$imagelol->system_mkdir($preview_dst_dir) 
 				or return error_log("Could not create directory image '$preview_dst_dir'.");
 		}
