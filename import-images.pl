@@ -19,7 +19,7 @@ my $imagelol = imagelol->new();
 my %config = $imagelol->get_config();
 
 # Variables
-my $max_threads = 10;			# Max threads to use
+my $max_threads = 7;			# Max threads to use
 my $imageq = Thread::Queue->new(); 	# Queue to put image files in
 my %images : shared;			# Images to add to DB
 
