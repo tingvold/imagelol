@@ -96,7 +96,7 @@ sub process_image{
 	if (	$image->{filename} =~ m/^.+\.($config{div}->{image_filenames})$/i ||
 		$image->{filename} =~ m/^.+\.($config{div}->{movie_filenames})$/i){
 		# We have a image (or, at least a filename that matches the image_filenames variable)
-
+		
 		log_it("Processing image $image->{filename}...");
 		
 		# Is this a RAW image? (affects what we do with preview, etc)
@@ -232,7 +232,17 @@ sub process_image{
 			$imagelol->rotate_image($jpg_dst, $jpg_dst) or return error_log("Could not rotate image '$jpg_dst'.");
 		}
 		
+		# If strict filename is in place, we don't want to add it to the DB
+		# We've done all of the above, so that we still have the image in the archive
+		# but since it will break the logic of the DB, we won't add it there
+		if ($config{div}->{strict_filename}){
+			unless($image->{filename} =~ m/^$config{regex}->{strict_filename}/i){
+				return error_log("Strict filenames enabled. Image '$image->{filename}' does not conform with this -- not adding to DB.");
+			}
+		}
+		
 		# Add to image hash, so we can add to DB later on
+		(my $imagenumber = $image->{pretty_filename}) =~ s/^$config{regex}->{imagenumber}$/$2/;
 		my %image_info : shared = (
 			image_file => $image->{pretty_filename},
 			original_file => $image_dst_file,
@@ -240,6 +250,7 @@ sub process_image{
 			import_file => $image->{org_src},
 			full_date => $full_date,
 			category => $category,
+			imagenumber => $imagenumber,
 		);
 		$images{$image->{org_src}} = \%image_info;
 		
@@ -269,14 +280,14 @@ sub process_images{
 # Add images to database
 sub db_add_images{
 	foreach my $imageid ( keys %images ){
-		(my $imagenumber = $images{$imageid}->{image_file}) =~ s/^$config{regex}->{imagenumber}$/$1/;
+		
 		
 		if($imagelol->db_add_image(	$images{$imageid}->{image_file},
 						$images{$imageid}->{original_file},
 						$images{$imageid}->{full_date},
 						$images{$imageid}->{category},
 						$images{$imageid}->{preview_file},
-						$imagenumber )){
+						$images{$imageid}->{imagenumber} )){
 			# All OK
 			log_it("Added image '$images{$imageid}->{image_file}' to the DB.");
 			

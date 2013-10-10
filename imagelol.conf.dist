@@ -21,14 +21,16 @@
 	movie_filenames = mov
 	raw_image = cr2
 	default_category = 6D
+	strict_filename = 1
 </div>
 
 <regex>
-	imagenumber = IMG_([0-9]+)\\.CR2
+	imagenumber = (IMG\\_|\\_MG\\_|DSCN|JHT\\_)([0-9]+).+
 	album_name = [a-zA-Z0-9\\ \\.\\-\\_\\&\\(\\)\\[\\]]+
 	img_range = ([0-9]+|([0-9]+(\\,|\\-){1}[0-9]+)){1}([0-9]+|([0-9]+(\\,|\\-){1}[0-9]+))*
 	range = [0-9]+\\-[0-9]+
 	single = [0-9]+
+	strict_filename = (IMG\\_|\\_MG\\_|DSCN|JHT\\_)[0-9]+
 </regex>
 
 <db>
