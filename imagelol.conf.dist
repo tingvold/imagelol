@@ -17,7 +17,7 @@
 <div>
 	imagelol_uid = jocke
 	imagelol_gid = bilder
-	image_filenames = cr2|jpg|jpeg|png
+	image_filenames = cr2|jpg|jpeg|png|gif
 	movie_filenames = mov
 	psd_filenames = psd
 	raw_image = cr2
