@@ -127,7 +127,7 @@ sub process_image{
 			# 'FileModifyDate' => '2013:08:03 21:54:09+02:00',
 			
 			if ($exif_tags->{'FileModifyDate'} =~ m/^[0-9]{4}\:[0-9]{2}\:[0-9]{2}\s+/){
-				($date, $time) = (split(' ', $exif_tags->{'DateTimeOriginal'}));
+				($date, $time) = (split(' ', $exif_tags->{'FileModifyDate'}));
 				($full_date = $date) =~ s/\:/-/g;
 				$full_date .= " " . $time;
 			}
