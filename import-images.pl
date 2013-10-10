@@ -108,9 +108,8 @@ sub process_image{
 		# We need to figure out the date the picture was taken
 		# First we try to use EXIF, and if that fails, we use the 'file created'
 		my $exif_tags = Image::ExifTool::ImageInfo(	$image->{org_src}, { PrintConv => 0 },
-								'DateTimeOriginal','PreviewImage','Orientation');
-								### TODO, if the above fails, we need to fetch specific
-								### tags depending on wether or not it's a raw file
+								'DateTimeOriginal','PreviewImage','Orientation'
+								'FileType', 'FileModifyDate' );
 		return error_log("EXIF failed: $exif_tags->{Error}") if $exif_tags->{'Error'};
 
 		my ($date, $time, $full_date);
@@ -119,6 +118,15 @@ sub process_image{
 			# 'DateTimeOriginal' => '2012:12:31 17:50:01',
 
 			if ($exif_tags->{'DateTimeOriginal'} =~ m/^[0-9]{4}\:[0-9]{2}\:[0-9]{2}\s+/){
+				($date, $time) = (split(' ', $exif_tags->{'DateTimeOriginal'}));
+				($full_date = $date) =~ s/\:/-/g;
+				$full_date .= " " . $time;
+			}
+		} elsif (defined($exif_tags->{'FileModifyDate'})){
+			# We have a value
+			# 'FileModifyDate' => '2013:08:03 21:54:09+02:00',
+			
+			if ($exif_tags->{'FileModifyDate'} =~ m/^[0-9]{4}\:[0-9]{2}\:[0-9]{2}\s+/){
 				($date, $time) = (split(' ', $exif_tags->{'DateTimeOriginal'}));
 				($full_date = $date) =~ s/\:/-/g;
 				$full_date .= " " . $time;
@@ -137,12 +145,6 @@ sub process_image{
 			$date = POSIX::strftime("%Y:%m:%d", localtime(stat($image->{org_src})->ctime()));
 			$full_date = POSIX::strftime("%Y-%m-%d %H:%M:%S", localtime(stat($image->{org_src})->ctime()));
 		}
-		
-		
-		#### TODO
-		# Utilize this EXIF-field?
-		# File Modification Date/Time     : 2010:07:14 23:22:17+02:00
-			
 
 		# At this point it should be safe to assume that $date
 		# has a value, and that it looks like YYYY:MM:DD
@@ -203,13 +205,25 @@ sub process_image{
 		}
 
 		# Make filename of preview
+		# Here we try to fetch the info via EXIF-tags
+		# Then we try to use the filename of the original file
 		(my $jpg_filename = $image->{pretty_filename}) =~ s/\.[^.]+$//;
-		if ($image->{filename} =~ m/^.+\.png$/i){
-			# .png-file
-			$jpg_filename .= ".png";
-		} else {
+		
+		if($is_raw || $is_psd){
+			# These are converted to .jpg, so no more checks
 			$jpg_filename .= ".jpg";
-		}
+		} else {
+			# Other files
+			if (defined($exif_tags->{'FileType'})){
+				# we have a filetype -- let's use that
+				my $filetype = lc($exif_tags->{'FileType'});
+				$jpg_filename .= ".$filetype";
+			} else {
+				# no value -- assume .jpg
+				$jpg_filename .= ".jpg";
+			}
+		}	
+			
 		my $jpg_dst = $preview_dst_dir . "/" . $jpg_filename;
 
 		# Copy preview
