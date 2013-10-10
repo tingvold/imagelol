@@ -252,7 +252,8 @@ sub process_image{
 					$imagelol->system_rm($image->{org_src})
 						or return error_log("Could not delete import image '$image->{org_src}'.");
 				}
-				return error_log("Strict filenames enabled. Image '$image->{filename}' does not conform with this -- not adding to DB.");
+				log_it("Strict filenames enabled. Image '$image->{filename}' does not conform with this -- not adding to DB.");
+				return 1; # this is not a fail
 			}
 		}
 		
