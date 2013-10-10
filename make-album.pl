@@ -54,12 +54,7 @@ sub fix_album{
 	my $images = $imagelol->get_image_range($img_range, $path_search);
 	
 	if((scalar keys %$images) > 0){
-		# We have some images. Act upon them. A few assumptions have been made;
-		#	- A new $img_range will overwrite any old ones. The history is stored, though.
-		#	  This way, if one by accident add a new range that is not correct, one can find
-		#	  the previous range, and restore it.
-		#	- 
-		
+		# We have some images. Act upon them.	
 		# First we check if album exists
 		my $album = $imagelol->get_album($album_name);
 		if($album){
@@ -143,7 +138,7 @@ sub delete_images{
 	
 	foreach my $imageid ( keys %$images ){
 		# Delete image $imageid from album $albumid
-		$imagelol->delete_image($imageid, $albumid);
+		$imagelol->delete_album_image($imageid, $albumid);
 		debug_log("Deleted imageid $imageid from albumid $albumid.");
 	}
 }

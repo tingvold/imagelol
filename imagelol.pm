@@ -79,7 +79,7 @@ my $sql_statements = {
 					WHERE	(ai.albumid = ?)
 				",
 				
-	delete_image =>		"	DELETE 	FROM album_images
+	delete_album_image =>	"	DELETE 	FROM album_images
 
 					WHERE 	(imageid = ?)
 						AND (albumid = ?)
@@ -568,11 +568,11 @@ sub get_album_images{
 }
 
 # Delete image
-sub delete_image{
+sub delete_album_image{
 	my $self = shift;
 	my ($imageid, $albumid) = @_;
 	
-	$self->{_sth} = $self->{_dbh}->prepare($sql_statements->{delete_image});
+	$self->{_sth} = $self->{_dbh}->prepare($sql_statements->{delete_album_image});
 	$self->{_sth}->execute($imageid, $albumid);
 	$self->{_sth}->finish();
 }
