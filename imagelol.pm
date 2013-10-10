@@ -84,7 +84,7 @@ my $sql_statements = {
 					WHERE 	(imageid = ?)
 						AND (albumid = ?)
 				",
-	add_image =>		"	INSERT	INTO album_images
+	add_album_image =>	"	INSERT	INTO album_images
 						(imageid, albumid)
 
 					VALUES	(?, ?)
@@ -387,7 +387,7 @@ sub copy_exif{
 }
 
 # Add image to database
-sub db_add_image{
+sub add_image{
 	my $self = shift;
 	my ($imagename, $original_path, $imagedate, $category, $preview_path, $imagenumber) = @_;
 	
@@ -578,11 +578,11 @@ sub delete_image{
 }
 
 # Add image
-sub add_image{
+sub add_album_image{
 	my $self = shift;
 	my ($imageid, $albumid) = @_;
 	
-	$self->{_sth} = $self->{_dbh}->prepare($sql_statements->{add_image});
+	$self->{_sth} = $self->{_dbh}->prepare($sql_statements->{add_album_image});
 	$self->{_sth}->execute($imageid, $albumid);
 	$self->{_sth}->finish();
 }

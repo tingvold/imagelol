@@ -282,7 +282,7 @@ sub db_add_images{
 	foreach my $imageid ( keys %images ){
 		
 		
-		if($imagelol->db_add_image(	$images{$imageid}->{image_file},
+		if($imagelol->add_image(	$images{$imageid}->{image_file},
 						$images{$imageid}->{original_file},
 						$images{$imageid}->{full_date},
 						$images{$imageid}->{category},

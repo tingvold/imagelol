@@ -154,7 +154,7 @@ sub add_images{
 	
 	foreach my $imageid ( keys %$images ){
 		# Add image $imageid to album $albumid
-		$imagelol->add_image($imageid, $albumid);
+		$imagelol->add_album_image($imageid, $albumid);
 		debug_log("Added imageid $imageid to albumid $albumid.");
 	}
 }
