@@ -136,7 +136,13 @@ sub process_image{
 			# Use YYYY:MM:DD, so that it's the same output as EXIF
 			$date = POSIX::strftime("%Y:%m:%d", localtime(stat($image->{org_src})->ctime()));
 			$full_date = POSIX::strftime("%Y-%m-%d %H:%M:%S", localtime(stat($image->{org_src})->ctime()));
-		}		
+		}
+		
+		
+		#### TODO
+		# Utilize this EXIF-field?
+		# File Modification Date/Time     : 2010:07:14 23:22:17+02:00
+			
 
 		# At this point it should be safe to assume that $date
 		# has a value, and that it looks like YYYY:MM:DD
@@ -198,7 +204,12 @@ sub process_image{
 
 		# Make filename of preview
 		(my $jpg_filename = $image->{pretty_filename}) =~ s/\.[^.]+$//;
-		$jpg_filename .= ".jpg";
+		if ($image->{filename} =~ m/^.+\.png$/i){
+			# .png-file
+			$jpg_filename .= ".png";
+		} else {
+			$jpg_filename .= ".jpg";
+		}
 		my $jpg_dst = $preview_dst_dir . "/" . $jpg_filename;
 
 		# Copy preview
