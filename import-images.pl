@@ -94,14 +94,16 @@ sub process_image{
 	my $image = shift;
 	
 	if (	$image->{filename} =~ m/^.+\.($config{div}->{image_filenames})$/i ||
-		$image->{filename} =~ m/^.+\.($config{div}->{movie_filenames})$/i){
+		$image->{filename} =~ m/^.+\.($config{div}->{movie_filenames})$/i ||
+		$image->{filename} =~ m/^.+\.($config{div}->{psd_filenames})$/i){
 		# We have a image (or, at least a filename that matches the image_filenames variable)
 		
 		log_it("Processing image $image->{filename}...");
 		
-		# Is this a RAW image? (affects what we do with preview, etc)
-		my $is_raw = 0;
+		# Is this a RAW or PSD image? (affects what we do with preview, etc)
+		my ($is_raw, $is_psd) = (0, 0);
 		$is_raw = 1 if ($image->{filename} =~ m/^.+\.($config{div}->{raw_image})$/i);
+		$is_psd = 1 if ($image->{filename} =~ m/^.+\.($config{div}->{psd_filenames})$/i);
 
 		# We need to figure out the date the picture was taken
 		# First we try to use EXIF, and if that fails, we use the 'file created'
@@ -212,13 +214,19 @@ sub process_image{
 				unlink $jpg_dst; # remove the bad file
 				return error_log("Could not copy preview image '$jpg_dst'. Aborting.");
 			}
+		} elsif ($is_psd){
+			# PSD
+			$imagelol->convert_psd($image->{org_src}, $jpg_dst)
+				or return error_log("Could not convert PSD image '$image->{org_src}' to '$jpg_dst'.");
 		} else {
 			# Copy normally, as source is non-RAW
-			$imagelol->copy_stuff($image->{org_src}, $jpg_dst) or return error_log("Could not copy image '$image->{org_src}' to '$jpg_dst'.");
+			$imagelol->copy_stuff($image->{org_src}, $jpg_dst)
+				or return error_log("Could not copy image '$image->{org_src}' to '$jpg_dst'.");
 		}
 
 		# Copy EXIF-data from source, into preview
-		$imagelol->copy_exif($image->{org_src}, $jpg_dst) or return error_log("Could not copy EXIF data from '$image->{org_src}' to '$jpg_dst'.");
+		$imagelol->copy_exif($image->{org_src}, $jpg_dst)
+			or return error_log("Could not copy EXIF data from '$image->{org_src}' to '$jpg_dst'.");
 
 		# Rotate full preview (if needed)
 		# http://sylvana.net/jpegcrop/exif_orientation.html
@@ -229,14 +237,21 @@ sub process_image{
 			$rotate = 0 if ($exif_tags->{'Orientation'} == 1);
 		}
 		if($rotate){
-			$imagelol->rotate_image($jpg_dst, $jpg_dst) or return error_log("Could not rotate image '$jpg_dst'.");
+			$imagelol->rotate_image($jpg_dst, $jpg_dst)
+				or return error_log("Could not rotate image '$jpg_dst'.");
 		}
 		
 		# If strict filename is in place, we don't want to add it to the DB
 		# We've done all of the above, so that we still have the image in the archive
 		# but since it will break the logic of the DB, we won't add it there
 		if ($config{div}->{strict_filename}){
-			unless($image->{filename} =~ m/^$config{regex}->{strict_filename}/i){
+			unless($image->{filename} =~ m/^$config{regex}->{strict_filename}/i && 
+				$image->{filename} =~ m/^.+\.($config{div}->{image_filenames})$/i){
+				if (-e $image->{org_src}){
+					# The file actually exists, lets delete it.
+					$imagelol->system_rm($image->{org_src})
+						or return error_log("Could not delete import image '$image->{org_src}'.");
+				}
 				return error_log("Strict filenames enabled. Image '$image->{filename}' does not conform with this -- not adding to DB.");
 			}
 		}

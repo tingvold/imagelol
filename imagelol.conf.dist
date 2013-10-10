@@ -19,6 +19,7 @@
 	imagelol_gid = bilder
 	image_filenames = cr2|jpg|jpeg
 	movie_filenames = mov
+	psd_filenames = psd
 	raw_image = cr2
 	default_category = 6D
 	strict_filename = 1
