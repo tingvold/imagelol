@@ -71,9 +71,9 @@ my $sql_statements = {
 						AND (enabled = true)
 				",
 	add_album_range =>	"	INSERT	INTO album_ranges
-						(imagerange, albumid, path_search)
+						(imagerange, albumid, path_search, category)
 						
-					VALUES	(?, ?, ?)
+					VALUES	(?, ?, ?, ?)
 				",
 	get_album_images =>	"	SELECT	*
 
@@ -588,10 +588,10 @@ sub get_album_ranges{
 # Add album range
 sub add_album_range{
 	my $self = shift;
-	my ($albumid, $img_range, $path_search) = @_;
+	my ($albumid, $img_range, $path_search, $category) = @_;
 	
 	$self->{_sth} = $self->{_dbh}->prepare($sql_statements->{add_album_range});
-	$self->{_sth}->execute($img_range, $albumid, $path_search);
+	$self->{_sth}->execute($img_range, $albumid, $path_search, $category);
 	$self->{_sth}->finish();
 }
 

@@ -51,10 +51,11 @@ if (@ARGV > 0) {
 #########
 ######### TODO
 #########
-## - List albums (in hiarchy, so nested albums are displayed under each other)
-## - List detailed info about specific album
+## - List detailed info about specific album (i.e. all active image-ranges + all images?)
 ## - Adding albums without images (to use for nested albums/sub-albums)
+## - Make symlinks of folders/albums
 ## 	- Use recursion to build the trees/folder-structure for the albums/sub-albums
+
 
 # Add images to album -- create album if needed
 sub fix_album{
@@ -79,9 +80,10 @@ sub fix_album{
 				foreach my $rangeid ( keys %$enabled_ranges ){
 					my $old_range = $enabled_ranges->{$rangeid}->{imagerange};
 					my $old_search = $enabled_ranges->{$rangeid}->{path_search};
-					
+					my $old_category = $enabled_ranges->{$rangeid}->{category};
+										
 					# Get old images
-					my $old_images = $imagelol->get_image_range($old_range, $old_search, $category);
+					my $old_images = $imagelol->get_image_range($old_range, $old_search, $old_category);
 					
 					if((scalar keys %$old_images) > 0){
 						# We got old images, lets merge them
@@ -95,7 +97,7 @@ sub fix_album{
 			
 			# Add new range
 			log_it("Adding range '$img_range' to album '$album_name'.");
-			$imagelol->add_album_range($album->{albumid}, $img_range, $path_search);
+			$imagelol->add_album_range($album->{albumid}, $img_range, $path_search, $category);
 						
 			# We add entries that isn't present from before
 			# We remove entries that are no longer present
@@ -172,7 +174,7 @@ sub add_new_album{
 	
 	# Add image range
 	log_it("Adding range '$img_range' to album '$album_name'.");
-	$imagelol->add_album_range($albumid, $img_range, $path_search);
+	$imagelol->add_album_range($albumid, $img_range, $path_search, $category);
 	
 	# Add all images in $img_range to that album
 	log_it("Adding images to album '$album_name'.");
