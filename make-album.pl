@@ -212,7 +212,7 @@ sub list_albums{
 		my $n = 115;
 		print_line($n, "-");
 		
-		foreach my $albumid (sort { $albums->{$a}->{added} <=> $albums->{$b}->{added} } keys %$albums){
+		foreach my $albumid (sort { $albums->{$a}->{added} cmp $albums->{$b}->{added} } keys %$albums){
 			unless($albums->{$albumid}->{parent}){
 				# Only do this to the primary albums (i.e. without a parent)
 				
