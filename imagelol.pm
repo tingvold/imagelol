@@ -53,7 +53,7 @@ my $sql_statements = {
 
 					WHERE 	((LOWER(name)) = (LOWER(?)))
 				",
-	get_albums =>		"	SELECT 	*
+	get_album =>		"	SELECT 	*
 	
 					FROM 	albums
 				",
@@ -507,6 +507,19 @@ sub get_image_range{
 sub get_album{
 	my $self = shift;
 	
+	$self->{_sth} = $self->{_dbh}->prepare($sql_statements->{get_album});
+	$self->{_sth}->execute();
+	
+	my $albuminfo = $self->{_sth}->fetchrow_hashref();
+	$self->{_sth}->finish();
+	
+	return $albuminfo;
+}
+
+# Get all albums
+sub get_albums{
+	my $self = shift;
+	
 	$self->{_sth} = $self->{_dbh}->prepare($sql_statements->{get_albums});
 	$self->{_sth}->execute();
 	
@@ -514,19 +527,6 @@ sub get_album{
 	$self->{_sth}->finish();
 	
 	return $albums;
-}
-
-# Get all albums
-sub get_albums{
-	my $self = shift;
-	
-	$self->{_sth} = $self->{_dbh}->prepare($sql_statements->{get_images});
-	$self->{_sth}->execute();
-	
-	my $images = $self->{_sth}->fetchall_hashref("imageid");
-	$self->{_sth}->finish();
-	
-	return $images;
 }
 
 # Get all images
