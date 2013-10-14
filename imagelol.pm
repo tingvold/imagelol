@@ -508,8 +508,6 @@ sub get_album{
 	my $self = shift;
 	my $album = shift;
 	
-	print "$album\n";
-	
 	$self->{_sth} = $self->{_dbh}->prepare($sql_statements->{get_album});
 	$self->{_sth}->execute($album);
 	
