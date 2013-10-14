@@ -53,7 +53,7 @@ my $sql_statements = {
 
 					WHERE 	((LOWER(name)) = (LOWER(?)))
 				",
-	get_album =>		"	SELECT 	*
+	get_albums =>		"	SELECT 	*
 	
 					FROM 	albums
 				",
