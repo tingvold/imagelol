@@ -510,7 +510,7 @@ sub get_album{
 	$self->{_sth} = $self->{_dbh}->prepare($sql_statements->{get_albums});
 	$self->{_sth}->execute();
 	
-	my $albuminfo = $self->{_sth}->fetchall_hashref("albumid");
+	my $albums = $self->{_sth}->fetchall_hashref("albumid");
 	$self->{_sth}->finish();
 	
 	return $albums;
