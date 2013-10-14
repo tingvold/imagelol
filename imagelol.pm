@@ -51,7 +51,11 @@ my $sql_statements = {
 
 					FROM 	albums
 
-					WHERE 	(name = ?)
+					WHERE 	((LOWER(name)) = (LOWER(?)))
+				",
+	get_albums =>		"	SELECT 	*
+	
+					FROM 	albums
 				",
 	disable_album_ranges =>	"	UPDATE 	album_ranges
 
@@ -239,9 +243,20 @@ sub connect{
 	
 	#if (pingable($config{db}->{hostname})){
 	if (1){
-		$self->{_dbh} = DBI->connect(	"DBI:Pg:dbname=$config{db}->{database};host=$config{db}->{hostname};port=$config{db}->{port};sslmode=require",
-						"$config{db}->{username}", "$config{db}->{password}", {'RaiseError' => 0, 'AutoInactiveDestroy' => 1}) 
-				or die log_it("imagelol", "Got error $DBI::errstr when connecting to database.");
+		my $connect_string = "DBI:Pg:";
+		$connect_string .= "dbname=$config{db}->{database};";
+		$connect_string .= "host=$config{db}->{hostname};";
+		$connect_string .= "port=$config{db}->{port};";
+		$connect_string .= "sslmode=require";
+		
+		$self->{_dbh} = DBI->connect(	$connect_string,
+						$config{db}->{username},
+						$config{db}->{password}, 
+						{
+							'RaiseError' => 0,
+							'AutoInactiveDestroy' => 1
+						}) 
+			or die log_it("imagelol", "Got error $DBI::errstr when connecting to database.");
 	} else {
 		error_log("imagelol", "Could not ping database-server.");
 		exit 1;
@@ -418,14 +433,16 @@ sub add_image{
 # Get range of images
 sub get_image_range{
 	my $self = shift;
-	my ($img_range, $path_search) = @_;
-	my $query = qq( SELECT * FROM images WHERE (path_original LIKE '%$path_search%') );
+	my ($img_range, $path_search, $category) = @_;
+	my $query = qq( SELECT * FROM images WHERE ((LOWER(path_original)) LIKE (LOWER('%$path_search%'))) );
+	$query .= qq( AND ( (LOWER(category)) = (LOWER('$category')) ) );
 	$query .= 'AND (';
 	
 	my $first = 1;
 	my $valid_ranges = 0;
 	my @img_ranges = split(',', $img_range);
 	foreach my $range (@img_ranges){
+		$range =~ s/\s+//g; # remove whitespace
 		if($range =~ m/^$config{regex}->{range}$/){
 			# a range, XXXX-YYYY
 			my ($range_start, $range_end) = split('-', $range);
@@ -489,15 +506,27 @@ sub get_image_range{
 # Fetch album info
 sub get_album{
 	my $self = shift;
-	my $album = shift;
 	
-	$self->{_sth} = $self->{_dbh}->prepare($sql_statements->{get_album});
-	$self->{_sth}->execute($album);
+	$self->{_sth} = $self->{_dbh}->prepare($sql_statements->{get_albums});
+	$self->{_sth}->execute();
 	
-	my $albuminfo = $self->{_sth}->fetchrow_hashref();
+	my $albuminfo = $self->{_sth}->fetchall_hashref("albumid");
 	$self->{_sth}->finish();
 	
-	return $albuminfo;	
+	return $albums;
+}
+
+# Get all albums
+sub get_albums{
+	my $self = shift;
+	
+	$self->{_sth} = $self->{_dbh}->prepare($sql_statements->{get_images});
+	$self->{_sth}->execute();
+	
+	my $images = $self->{_sth}->fetchall_hashref("imageid");
+	$self->{_sth}->finish();
+	
+	return $images;
 }
 
 # Get all images

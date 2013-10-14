@@ -31,14 +31,19 @@ sub error_log{
 }
 
 # Get options
-my ($path_search, $img_range, $album_name, $album_description, $delete_range);
+my (	$path_search, $img_range, $album_name, $album_description,
+	$category, $delete_range, $list, $generate);
+
 if (@ARGV > 0) {
 	GetOptions(
-	'search=s'		=> \$path_search,
-	'range=s'		=> \$img_range,
-	'album=s'		=> \$album_name,
-	'desc|description=s'	=> \$album_description,
-	'delete'		=> \$delete_range,
+	's|search=s'		=> \$path_search,	# searches in the path_original table
+	'r|range=s'		=> \$img_range,		# the range of images, separated by comma
+	'a|album=s'		=> \$album_name,	# name of the album
+	'd|desc|description=s'	=> \$album_description,	# description of album
+	'c|cat|category=s'	=> \$category,		# define category -- use default if not defined
+	'delete'		=> \$delete_range,	# disable all image ranges
+	'list|print'		=> \$list,		# list all albums
+	'generate|cron'		=> \$generate,		# generate symlinks
 	)
 }
 
@@ -51,7 +56,7 @@ if (@ARGV > 0) {
 
 # Add images to album -- create album if needed
 sub fix_album{
-	my $images = $imagelol->get_image_range($img_range, $path_search);
+	my $images = $imagelol->get_image_range($img_range, $path_search, $category);
 	
 	if((scalar keys %$images) > 0){
 		# We have some images. Act upon them.	
@@ -74,7 +79,7 @@ sub fix_album{
 					my $old_search = $enabled_ranges->{$rangeid}->{path_search};
 					
 					# Get old images
-					my $old_images = $imagelol->get_image_range($old_range, $old_search);
+					my $old_images = $imagelol->get_image_range($old_range, $old_search, $category);
 					
 					if((scalar keys %$old_images) > 0){
 						# We got old images, lets merge them
@@ -184,6 +189,75 @@ sub update_album_description{
 	}
 }
 
+# Print X number of a specific character
+sub print_line{
+	my $n = shift;
+	my $char = shift;
+
+	(my $line = "") =~ s/^(.*)/"$char" x $n . $1/e;
+	printf("%10s %s\n", "", $line);
+}
+
+# List all albums
+sub list_albums{
+	# Get all albums
+	my $albums = $imagelol->get_albums();
+	
+	if((scalar keys %$albums) > 0){
+		# We have albums -- go through them one-by-one, sorted by date added
+		print("\n\n\n");
+		printf("%10s %-10s %-40s %-40s %-10s %-20s\n", "",
+				"albumid", "name", "description", "parent", "added");
+
+		my $n = 115;
+		print_line($n, "-");
+		
+		foreach my $albumid (sort { $albums->{$a}->{added} <=> $albums->{$b}->{added} } keys %$albums){
+			unless($albums->{$albumid}->{parent}){
+				# Only do this to the primary albums (i.e. without a parent)
+				
+				printf("%10s %-10s %-40s %-40s %-10s %-20s\n", "",
+						$albumid,
+						$albums->{$albumid}->{name},
+						$albums->{$albumid}->{description},
+						"--",
+						$albums->{$albumid}->{added});
+				# Let's find all the childs for this album
+				print_album_childs($albums, $albumid);
+			}
+			# at this point we should be done
+		}
+		
+		print_line($n, "-");
+	} else {
+		log_it("No albums found...");
+	}
+}
+
+# Print childs for a specific albumid
+sub print_album_childs{
+	my ($albums, $parent_albumid) = @_;
+	
+	foreach my $albumid (keys %$albums){
+		if($albums->{$albumid}->{parent}){
+			# we have a parent defined
+			if($albums->{$albumid}->{parent} = $parent_albumid){
+				# we have a child for the parent album
+				# print it + all of it's childs
+				printf("%10s ->%-10s %-40s %-40s %-10s %-20s\n", "",
+						$albumid,
+						$albums->{$albumid}->{name},
+						$albums->{$albumid}->{description},
+						$albums->{$albumid}->{parent},
+						$albums->{$albumid}->{added});
+				print_album_childs($albums, $albumid); # do some recursion to find all childs			
+			}
+		}
+	}
+	
+	return 0; # stop recursion/subroutine
+}
+
 # We only want 1 instance of this script running
 # Check if already running -- if so, abort.
 unless (flock(DATA, LOCK_EX|LOCK_NB)) {
@@ -194,6 +268,23 @@ unless (flock(DATA, LOCK_EX|LOCK_NB)) {
 my $time_start = time();
 $imagelol->connect();
 
+# If we should list albums, or make symlinks, we do that here
+if($list || $generate){
+	if($list){
+		list_albums();
+	}
+	
+	if($generate){
+		generate_symlinks();
+	}
+	
+	exit 1; # done, don't do any of the other things
+}
+
+# Unless category defined, use default
+unless($category){
+	$category = $config{div}->{default_category};
+}
 
 # If $img_range, needs to be valid
 if($img_range){

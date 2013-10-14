@@ -175,7 +175,12 @@ sub process_image{
 
 		# If movie, we've done enough
 		if ($image->{filename} =~ m/^.+\.($config{div}->{movie_filenames})$/i){
-			return 1;
+			if (-e $image->{org_src}){
+				# The file actually exists, lets delete it.
+				$imagelol->system_rm($image->{org_src})
+					or return error_log("Could not delete movie '$image->{org_src}'.");
+			}
+			return 1; # return gracefully -- this is not a fail
 		}
 
 		# Extract preview
@@ -278,7 +283,7 @@ sub process_image{
 						or return error_log("Could not delete import image '$image->{org_src}'.");
 				}
 				log_it("Strict filenames enabled. Image '$image->{filename}' does not conform with this -- not adding to DB.");
-				return 1; # this is not a fail
+				return 1; # return gracefullly -- this is not a fail
 			}
 		}
 		
