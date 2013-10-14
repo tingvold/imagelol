@@ -506,9 +506,12 @@ sub get_image_range{
 # Fetch album info
 sub get_album{
 	my $self = shift;
+	my $album = shift;
+	
+	print "$album\n";
 	
 	$self->{_sth} = $self->{_dbh}->prepare($sql_statements->{get_album});
-	$self->{_sth}->execute();
+	$self->{_sth}->execute($album);
 	
 	my $albuminfo = $self->{_sth}->fetchrow_hashref();
 	$self->{_sth}->finish();

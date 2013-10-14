@@ -32,7 +32,7 @@ sub error_log{
 
 # Get options
 my (	$path_search, $img_range, $album_name, $album_description,
-	$category, $delete_range, $list, $generate);
+	$category, $delete_range, $list, $generate, $empty_album);
 
 if (@ARGV > 0) {
 	GetOptions(
@@ -43,7 +43,8 @@ if (@ARGV > 0) {
 	'c|cat|category=s'	=> \$category,		# define category -- use default if not defined
 	'delete'		=> \$delete_range,	# disable all image ranges
 	'list|print'		=> \$list,		# list all albums
-	'generate|cron'		=> \$generate,		# generate symlinks
+	'gen|generate|cron'	=> \$generate,		# generate symlinks
+	'empty'			=> \$empty_album,	# make empty album
 	)
 }
 
@@ -51,6 +52,7 @@ if (@ARGV > 0) {
 ######### TODO
 #########
 ## - List albums (in hiarchy, so nested albums are displayed under each other)
+## - List detailed info about specific album
 ## - Adding albums without images (to use for nested albums/sub-albums)
 ## 	- Use recursion to build the trees/folder-structure for the albums/sub-albums
 
@@ -189,13 +191,24 @@ sub update_album_description{
 	}
 }
 
-# Print X number of a specific character
-sub print_line{
+# Return X number of a specific character
+sub make_line{
 	my $n = shift;
 	my $char = shift;
 
 	(my $line = "") =~ s/^(.*)/"$char" x $n . $1/e;
-	printf("%10s %s\n", "", $line);
+	
+	return $line;
+}
+
+# Print X number of a specific character
+sub print_line{
+	my $n = shift;
+	my $char = shift;
+	
+	my $line = make_line($n, $char);
+	
+	printf("%s\n", $line);
 }
 
 # List all albums
@@ -206,22 +219,16 @@ sub list_albums{
 	if((scalar keys %$albums) > 0){
 		# We have albums -- go through them one-by-one, sorted by date added
 		print("\n\n\n");
-		printf("%10s %-10s %-40s %-40s %-10s %-20s\n", "",
-				"albumid", "name", "description", "parent", "added");
+		printf("%-20s %-40s %-40s %-10s %-20s\n", "albumid", "name", "description", "parent", "added");
 
-		my $n = 115;
+		my $n = 145;
 		print_line($n, "-");
 		
 		foreach my $albumid (sort { $albums->{$a}->{added} cmp $albums->{$b}->{added} } keys %$albums){
 			unless($albums->{$albumid}->{parent}){
 				# Only do this to the primary albums (i.e. without a parent)
-				
-				printf("%10s %-10s %-40s %-40s %-10s %-20s\n", "",
-						$albumid,
-						$albums->{$albumid}->{name},
-						$albums->{$albumid}->{description},
-						"--",
-						$albums->{$albumid}->{added});
+				print_album_line($albums, $albumid);
+								
 				# Let's find all the childs for this album
 				print_album_childs($albums, $albumid);
 			}
@@ -229,6 +236,7 @@ sub list_albums{
 		}
 		
 		print_line($n, "-");
+		print("\n\n");
 	} else {
 		log_it("No albums found...");
 	}
@@ -236,26 +244,70 @@ sub list_albums{
 
 # Print childs for a specific albumid
 sub print_album_childs{
-	my ($albums, $parent_albumid) = @_;
+	my ($albums, $parent_albumid, $level) = @_;
 	
+	if(defined($level)){
+		$level++;
+	} else {
+		$level = 1;
+	}
+
 	foreach my $albumid (keys %$albums){
 		if($albums->{$albumid}->{parent}){
-			# we have a parent defined
-			if($albums->{$albumid}->{parent} = $parent_albumid){
+			# we have an album with a parent defined
+			if($albums->{$albumid}->{parent} == $parent_albumid){
 				# we have a child for the parent album
 				# print it + all of it's childs
-				printf("%10s ->%-10s %-40s %-40s %-10s %-20s\n", "",
-						$albumid,
-						$albums->{$albumid}->{name},
-						$albums->{$albumid}->{description},
-						$albums->{$albumid}->{parent},
-						$albums->{$albumid}->{added});
-				print_album_childs($albums, $albumid); # do some recursion to find all childs			
+				print_album_line($albums, $albumid, $level);
+				
+				# Look for more childs recursively
+				print_album_childs($albums, $albumid, $level);
 			}
 		}
 	}
 	
-	return 0; # stop recursion/subroutine
+	return 1; # stop recursion/subroutine, not really needed
+}
+
+# Print single album-line
+sub print_album_line{
+	my ($albums, $albumid, $level) = @_;
+	
+	# make short names, fitting the printf lengths
+	my $albumname = $albums->{$albumid}->{name};
+	if(length($albumname) > 35){
+		$albumname = substr($albumname, 0, 32);
+		$albumname .= " [...]";
+	}
+	
+	my $description = $albums->{$albumid}->{description};
+	if(length($description) > 35){
+		$description = substr($description, 0, 32);
+		$description .= " [...]";
+	}
+	
+	my $parent = $albums->{$albumid}->{parent};
+	my $level_string = '';
+	
+	if($parent){
+		$level_string = make_line($level, '>') . " ";
+	} else {
+		$parent = "-";
+	}
+	
+	my $newalbumid = $level_string . $albumid;
+		
+	printf("%-20s %-40s %-40s %-10s %-20s\n",
+			$newalbumid,
+			$albumname,
+			$description,
+			$parent,
+			$albums->{$albumid}->{added});
+}
+
+# Generate all the symlinks
+sub generate_symlinks{
+	
 }
 
 # We only want 1 instance of this script running
@@ -277,49 +329,49 @@ if($list || $generate){
 	if($generate){
 		generate_symlinks();
 	}
-	
-	exit 1; # done, don't do any of the other things
-}
-
-# Unless category defined, use default
-unless($category){
-	$category = $config{div}->{default_category};
-}
-
-# If $img_range, needs to be valid
-if($img_range){
-	unless($img_range =~ m/^$config{regex}->{img_range}$/){
-		exit error_log("Invalid image range.");
+} else {
+	# Unless category defined, use default
+	unless($category){
+		$category = $config{div}->{default_category};
 	}
-}
 
-# If $album_name, needs to be valid
-if($album_name){
-	unless($album_name =~ m/^$config{regex}->{album_name}$/){
-		exit error_log("Invalid album name.");
+	# If $img_range, needs to be valid
+	if($img_range){
+		unless($img_range =~ m/^$config{regex}->{img_range}$/){
+			exit error_log("Invalid image range.");
+		}
 	}
-}
 
-# Update album description only
-if(($album_name && $album_description) && !$path_search && !$img_range && !$delete_range){
-	update_album_description();
-	log_it("Set description for album '$album_name' to '$album_description'.");
-	exit 0;
-}
+	# If $album_name, needs to be valid
+	if($album_name){
+		unless($album_name =~ m/^$config{regex}->{album_name}$/){
+			exit error_log("Invalid album name.");
+		}
+	}
 
-# Need at least these three if we are to do anything more
-unless($path_search && $img_range && $album_name){
-	exit error_log("Need to fill out all the required parameters.");
-}
+	# Update album description only
+	if(($album_name && $album_description) && !$path_search && !$img_range && !$delete_range){
+		update_album_description();
+		log_it("Set description for album '$album_name' to '$album_description'.");
+		exit 0;
+	}
 
-# At this point we should have a valid starting point
-fix_album();
+	# Need at least these three if we are to do anything more
+	unless($path_search && $img_range && $album_name){
+		exit error_log("Need to fill out all the required parameters.");
+	}
+
+	# At this point we should have a valid starting point
+	fix_album();
+}
 
 $imagelol->disconnect();
 
-# How long did we run
-my $runtime = time() - $time_start;
-log_it("Took $runtime seconds to complete.");
+unless($list || $generate){
+	# How long did we run
+	my $runtime = time() - $time_start;
+	log_it("Took $runtime seconds to complete.");
+}
 
 __DATA__
 Do not remove. Makes sure flock() code above works as it should.
