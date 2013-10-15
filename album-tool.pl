@@ -32,6 +32,9 @@ sub error_log{
 	return 0;
 }
 
+# All images from DB
+my %images_from_db;
+
 # Get options
 my (	$path_search, $img_range, $album_name, $album_description, $category,
 	$delete, $list, $generate, $empty_album, $parent_id);
@@ -55,61 +58,62 @@ if (@ARGV > 0) {
 ######### TODO
 #########
 ## - List detailed info about specific album (i.e. all active image-ranges + all images + number of images)
-## - Show number of images per album on the album-list
 
 
 
 # Add images to album -- create album if needed
 sub fix_album{
+	# Get images
 	my $images = $imagelol->get_image_range($img_range, $path_search, $category);
 	
-	if((scalar keys %$images) > 0){
-		# We have some images. Act upon them.	
-		# First we check if album exists
-		my $album = $imagelol->get_album($album_name);
-		if($album){
-			# Default is to add the range to current ranges
-			# However, if we want to delete (i.e. overwrite) the current images in an
-			# album with a new range, we can use this
-			if($delete){
-				# We disable all previous ranges, and update with current images
-				$imagelol->disable_album_ranges($album->{albumid});
-				log_it("Since deletion was used, all previous ranges for album '$album_name' has now been disabled.");
-			} else {
-				# Do this for each enabled range for this album
-				my $enabled_ranges = $imagelol->get_album_ranges($album->{albumid});
+	# Check if album exists
+	my $album = $imagelol->get_album($album_name);
+	if($album){
+		# Default is to add the range to current ranges
+		# However, if we want to delete (i.e. overwrite) the current images in an
+		# album with a new range, we can use this
+
+		if($delete){
+			# We disable all previous ranges, and update with current images
+			$imagelol->disable_album_ranges($album->{albumid});
+			log_it("Since deletion was used, all previous ranges for album '$album_name' has now been disabled.");
+		} else {
+			# Do this for each enabled range for this album
+			my $enabled_ranges = $imagelol->get_album_ranges($album->{albumid});
+			
+			foreach my $rangeid ( keys %$enabled_ranges ){
+				my $old_range = $enabled_ranges->{$rangeid}->{imagerange};
+				my $old_search = $enabled_ranges->{$rangeid}->{path_search};
+				my $old_category = $enabled_ranges->{$rangeid}->{category};
+									
+				# Get old images
+				my $old_images = $imagelol->get_image_range($old_range, $old_search, $old_category);
 				
-				foreach my $rangeid ( keys %$enabled_ranges ){
-					my $old_range = $enabled_ranges->{$rangeid}->{imagerange};
-					my $old_search = $enabled_ranges->{$rangeid}->{path_search};
-					my $old_category = $enabled_ranges->{$rangeid}->{category};
-										
-					# Get old images
-					my $old_images = $imagelol->get_image_range($old_range, $old_search, $old_category);
-					
-					if((scalar keys %$old_images) > 0){
-						# We got old images, lets merge them
-						log_it("Merging image-range '$old_range [$old_category]' with provided range ($img_range [$category]).");
-						$images = { %$images, %$old_images };
-					} else {
-						error_log("No images found for the album '$album_name' with range '$old_range [$old_category]' and search '$old_search'.");
-					}
+				if((scalar keys %$old_images) > 0){
+					# We got old images, lets merge them
+					log_it("Merging image-range '$old_range [$old_category]' with provided range ($img_range [$category]).");
+					$images = { %$images, %$old_images };
+				} else {
+					error_log("No images found for the album '$album_name' with range '$old_range [$old_category]' and search '$old_search'.");
 				}
 			}
 			
-			# Add new range
+			# Add new range, but not if we're deleting
 			log_it("Adding range '$img_range [$category]' to album '$album_name'.");
 			$imagelol->add_album_range($album->{albumid}, $img_range, $path_search, $category);
-						
-			# We add entries that isn't present from before
-			# We remove entries that are no longer present
-			add_delete_albumentries($images, $album->{albumid});
-		} else {
-			# We create it from scratch
-			add_new_album($images);
+			
+			# Warn if no images found
+			unless((scalar keys %$images) > 0){
+				error_log("No images found for the range '$img_range' with search '$path_search'.");
+			}
 		}
+			
+		# We add entries that isn't present from before
+		# We remove entries that are no longer present
+		add_delete_albumentries($images, $album->{albumid});
 	} else {
-		error_log("No images found for the range '$img_range' with search '$path_search'.");
+		# We create it from scratch
+		add_new_album($images);
 	}
 }
 
@@ -334,7 +338,7 @@ sub print_album_line{
 	my $level_string = '';
 	
 	if($parent){
-		$level_string = make_line($level, '>') . " ";
+		$level_string = char_repeat($level, '>') . " ";
 	} else {
 		$parent = "-";
 	}
@@ -360,43 +364,21 @@ sub generate_symlinks{
 	# Get all albums
 	my $albums = $imagelol->get_albums();
 	
-	# All images from DB
-	my %images_from_db;
-	
 	if((scalar keys %$albums) > 0){
 		# We have albums -- go through them one-by-one
 		
 		foreach my $albumid ( keys %$albums ){
-			# add album-info to hash
-			$images_from_db{$albumid}{albumname} = $albums->{$albumid}->{name};
-
-			# find album images
-			my $album_images = $imagelol->get_album_images($albumid);
-			
-			foreach my $imageid ( keys %$album_images ){
-				# alter image src, so that it fits our www-scheme
-				my $image_src = $album_images->{$imageid}->{path_preview};
-				$image_src =~ s/^$config{path}->{preview_folder}//i; # remove the original prefix
-				$image_src = $config{path}->{www_original} . $image_src; # add new prefix
-
-				# alter image dst, so that it fits our www-scheme
-				my $image_dst_path = $config{path}->{www_base}; # base prefix
-				$image_dst_path .= "/" . $albums->{$albumid}->{name}; # album name
-							
-				# image name
-				my $image_name = basename($album_images->{$imageid}->{path_preview}); # get only filename
+			unless($albums->{$albumid}->{parent}){
+				# album without parent defined -- these are our root albums
 				
-				# full path
-				my $image_dst = $image_dst_path . "/" . $image_name;
+				# add album-info to hash
+				$images_from_db{$albumid}{albumname} = $albums->{$albumid}->{name};
 				
-				my %image = (
-					image_src => $image_src,
-					image_dst_path => $image_dst_path,
-					image_name => $image_name,
-				);
+				# add all images
+				get_album_images($albumid, $albums->{$albumid}->{name});
 				
-				# add to hash
-				$images_from_db{$albumid}{images}{$image_dst} = \%image;				
+				# add all childs recursively
+				get_album_childs($albums, $albumid, $albums->{$albumid}->{name});
 			}
 		}
 	} else {
@@ -435,6 +417,66 @@ sub generate_symlinks{
 	
 	# Add images from database
 	add_symlinks(\%images_from_db);
+}
+
+# Subroutine to add all child albums to hash
+sub get_album_childs{
+	my ($albums, $parent_albumid, $album_path) = @_;
+
+	foreach my $albumid ( keys %$albums ){
+		if($albums->{$albumid}->{parent}){
+			# we have an album with a parent defined
+			if($albums->{$albumid}->{parent} == $parent_albumid){
+				# we have a child for the parent album
+				# add it + all of it's childs
+				
+				# summarize the album path
+				my $new_album_path = $album_path . "/" . $albums->{$albumid}->{name};
+				
+				# add all images
+				get_album_images($albumid, $new_album_path);
+							
+				# Look for more childs recursively
+				get_album_childs($albums, $albumid, $new_album_path);
+			}
+		}
+	}	
+	return 1; # stop recursion/subroutine, not really needed
+}
+
+
+# Subroutine to add album images to hash
+sub get_album_images{
+	my ($albumid, $album_path) = @_;
+
+	# find album images
+	my $album_images = $imagelol->get_album_images($albumid);
+
+	foreach my $imageid ( keys %$album_images ){
+		# alter image src, so that it fits our www-scheme
+		my $image_src = $album_images->{$imageid}->{path_preview};
+		$image_src =~ s/^$config{path}->{preview_folder}//i; # remove the original prefix
+		$image_src = $config{path}->{www_original} . $image_src; # add new prefix
+
+		# alter image dst, so that it fits our www-scheme
+		my $image_dst_path = $config{path}->{www_base}; # base prefix
+		$image_dst_path .= "/" . $album_path; # album path
+
+		# image name
+		my $image_name = basename($album_images->{$imageid}->{path_preview}); # get only filename
+
+		# full path
+		my $image_dst = $image_dst_path . "/" . $image_name;
+
+		my %image = (
+			image_src => $image_src,
+			image_dst_path => $image_dst_path,
+			image_name => $image_name,
+		);
+
+		# add to hash
+		$images_from_db{$albumid}{images}{$image_dst} = \%image;				
+	}
 }
 
 # Delete all symlinks from filesystem
