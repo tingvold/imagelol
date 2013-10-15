@@ -6,7 +6,6 @@ use Getopt::Long;
 use File::Find;
 use File::Basename;
 use Encode;
-use Data::Dumper;
 
 # Load imagelol
 my $imagelol_dir;
@@ -66,7 +65,6 @@ sub fix_album{
 	# Get images
 	my $images = $imagelol->get_image_range($img_range, $path_search, $category);
 	debug_log("$img_range, $path_search, $category");
-	print Dumper($images);
 	
 	# Check if album exists
 	my $album = $imagelol->get_album($album_name);
