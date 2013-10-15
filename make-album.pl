@@ -41,6 +41,7 @@ if (@ARGV > 0) {
 	'a|album=s'		=> \$album_name,	# name of the album
 	'd|desc|description=s'	=> \$album_description,	# description of album
 	'c|cat|category=s'	=> \$category,		# define category -- use default if not defined
+	'p|parent=s'		=> \$parent_id		# set a parent id for this album
 	'delete'		=> \$delete_range,	# disable all image ranges
 	'list|print'		=> \$list,		# list all albums
 	'gen|generate|cron'	=> \$generate,		# generate symlinks
@@ -52,7 +53,7 @@ if (@ARGV > 0) {
 ######### TODO
 #########
 ## - List detailed info about specific album (i.e. all active image-ranges + all images?)
-## - Adding albums without images (to use for nested albums/sub-albums)
+## - Be able to define parent id for an album (both with new album, and with update (similar to description-update))
 ## - Make symlinks of folders/albums
 ## 	- Use recursion to build the trees/folder-structure for the albums/sub-albums
 
@@ -87,16 +88,16 @@ sub fix_album{
 					
 					if((scalar keys %$old_images) > 0){
 						# We got old images, lets merge them
-						log_it("Merging image-range '$old_range' with provided range ($img_range).");
+						log_it("Merging image-range '$old_range [$old_category]' with provided range ($img_range [$category]).");
 						$images = { %$images, %$old_images };
 					} else {
-						error_log("No images found for the album '$album_name' with range '$old_range' and search '$old_search'.");
+						error_log("No images found for the album '$album_name' with range '$old_range [$old_category]' and search '$old_search'.");
 					}
 				}
 			}
 			
 			# Add new range
-			log_it("Adding range '$img_range' to album '$album_name'.");
+			log_it("Adding range '$img_range [$category]' to album '$album_name'.");
 			$imagelol->add_album_range($album->{albumid}, $img_range, $path_search, $category);
 						
 			# We add entries that isn't present from before
@@ -107,7 +108,12 @@ sub fix_album{
 			add_new_album($images);
 		}
 	} else {
-		error_log("No images found for the range '$img_range' with search '$path_search'.");
+		if($empty_album){
+			# just add album
+			add_new_album();
+		} else {
+			error_log("No images found for the range '$img_range' with search '$path_search'.");
+		}
 	}
 }
 
@@ -170,15 +176,21 @@ sub add_new_album{
 
 	# Create album -- albumid of created album is returned
 	my $albumid = $imagelol->add_album($album_name, $album_description);
-	log_it("Added new album ($album_name), that got albumid $albumid.");
 	
-	# Add image range
-	log_it("Adding range '$img_range' to album '$album_name'.");
-	$imagelol->add_album_range($albumid, $img_range, $path_search, $category);
-	
-	# Add all images in $img_range to that album
-	log_it("Adding images to album '$album_name'.");
-	add_images($images, $albumid);
+	if($empty_album){
+		# empty album is to be added, do nothing more
+		log_it("Added new empty album ($album_name), that got albumid $albumid.");
+	} else {
+		log_it("Added new album ($album_name), that got albumid $albumid.");
+		
+		# Add image range
+		log_it("Adding range '$img_range' to album '$album_name'.");
+		$imagelol->add_album_range($albumid, $img_range, $path_search, $category);
+
+		# Add all images in $img_range to that album
+		log_it("Adding images to album '$album_name'.");
+		add_images($images, $albumid);
+	}
 }
 
 # Update description on album
