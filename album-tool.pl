@@ -5,6 +5,7 @@ use lib "/opt/local/lib/perl5/site_perl/5.12.4";
 use Getopt::Long;
 use File::Find;
 use File::Basename;
+use Encode;
 use Data::Dumper;
 
 # Load imagelol
@@ -235,7 +236,7 @@ sub add_empty_album{
 }
 
 # Return X number of a specific character
-sub make_line{
+sub char_repeat{
 	my $n = shift;
 	my $char = shift;
 
@@ -244,14 +245,14 @@ sub make_line{
 	return $line;
 }
 
-# Print X number of a specific character
-sub print_line{
+# return space-padded string with length n
+sub space_pad{
 	my $n = shift;
-	my $char = shift;
+	my $string = shift;
+
+	$string .= char_repeat(($n - length(Encode::decode_utf8($string))), " ");
 	
-	my $line = make_line($n, $char);
-	
-	printf("%s\n", $line);
+	return $string;
 }
 
 # List all albums
@@ -265,7 +266,7 @@ sub list_albums{
 		printf("%-20s %-40s %-40s %-10s %-35s %-10s\n", "albumid", "name", "description", "parent", "added", "# of images");
 
 		my $n = 165;
-		print_line($n, "-");
+		print char_repeat($n, "-") . "\n";
 		
 		foreach my $albumid (sort { $albums->{$b}->{added} cmp $albums->{$a}->{added} } keys %$albums){
 			unless($albums->{$albumid}->{parent}){
@@ -278,7 +279,7 @@ sub list_albums{
 			# at this point we should be done
 		}
 		
-		print_line($n, "-");
+		print char_repeat($n, "-") . "\n";
 		print("\n\n");
 	} else {
 		log_it("No albums found...");
@@ -340,13 +341,14 @@ sub print_album_line{
 	
 	my $newalbumid = $level_string . $albumid;
 	
-	printf("%-20s %-40s %-40s %-10s %-35s %-10s\n",
-			$newalbumid,
-			$albumname,
-			$description,
-			$parent,
-			$albums->{$albumid}->{added},
-			$albums->{$albumid}->{image_count});
+	# due to printf being sucky at unicode chars, we do it our own way
+	my $string = space_pad(21, $newalbumid);
+	$string .= space_pad(41, $albumname);
+	$string .= space_pad(41, $description);
+	$string .= space_pad(11, $parent);
+	$string .= space_pad(36, $albums->{$albumid}->{added});
+	$string .= space_pad(11, $albums->{$albumid}->{image_count});
+	print "$string\n";
 }
 
 # Generate all the symlinks
