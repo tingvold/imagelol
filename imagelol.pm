@@ -53,9 +53,14 @@ my $sql_statements = {
 
 					WHERE 	((LOWER(name)) = (LOWER(?)))
 				",
-	get_albums =>		"	SELECT 	*
-	
-					FROM 	albums
+	get_albums =>		"	SELECT 	*,
+						(
+							SELECT 	COUNT (*)
+							FROM	album_images ai
+							WHERE	a.albumid = ai.albumid
+						) AS image_count
+
+					FROM 	albums a
 				",
 	disable_album_ranges =>	"	UPDATE 	album_ranges
 
@@ -99,10 +104,22 @@ my $sql_statements = {
 
 					WHERE 	(albumid = ?)
 				",
+	set_album_parent =>	"	UPDATE 	albums
+
+					SET 	parent = (nullif(?, '')::int)
+
+					WHERE 	(albumid = ?)
+				",
 	add_album =>		"	INSERT	INTO albums
 						(name, description, parent)
 
 					VALUES	(?, ?, ?)
+				",
+	album_count =>		"	SELECT	COUNT (*)
+
+					FROM	albums
+
+					WHERE	(albumid = ?)
 				",
 };
 
@@ -362,6 +379,31 @@ sub system_mkdir{
 	my $dir = "@_";
 	
 	(system("$config{binaries}->{mkdir} -p \"$dir\"") == 0) or return 0;
+	return 1;
+}
+
+# Find all symlinked files
+sub system_find_symlinks{
+	if ($_[0] =~ m/HASH/){
+		#Value is a reference on an anonymous hash
+		shift; # Remove class that is passed to the subroutine
+	}
+	my $dir = "@_";
+	
+	my @symlinks = `$config{binaries}->{find} \"$dir\" -type l`;
+	
+	return @symlinks;
+}
+
+# Make symlink
+sub system_ln{
+	if ($_[0] =~ m/HASH/){
+		#Value is a reference on an anonymous hash
+		shift; # Remove class that is passed to the subroutine
+	}
+	my ($source, $dest) = @_;
+	
+	(system("$config{binaries}->{ln} -s \"$source\" \"$dest\"") == 0) or return 0;
 	return 1;
 }
 
@@ -634,8 +676,6 @@ sub add_album{
 	my $self = shift;
 	my ($album_name, $album_description, $parent_albumid) = @_;
 	
-	# TODO: fix support for nested albums
-	
 	$self->{_sth} = $self->{_dbh}->prepare($sql_statements->{add_album});
 	$self->{_sth}->execute($album_name, $album_description, $parent_albumid);
 	my $albumid = $self->{_dbh}->last_insert_id(undef,undef,undef,undef,{sequence=>'albums_albumid_seq'});
@@ -653,5 +693,33 @@ sub set_album_description{
 	$self->{_sth}->execute($album_description, $albumid);
 	$self->{_sth}->finish();
 }
+
+# Album exists
+# Should only be 0 or 1, since albumid has unique-constraints
+sub album_exists{
+	my $self = shift;
+	my $albumid = shift;
+	
+	$self->{_sth} = $self->{_dbh}->prepare($sql_statements->{album_count});
+	$self->{_sth}->execute($albumid);
+	
+	my $album_count = ($self->{_sth}->fetchrow_array)[0];
+	$self->{_sth}->finish();
+	
+	return $album_count;
+}
+
+# Change album parent
+sub set_album_parent{
+	my $self = shift;
+	my ($albumid, $parent_id) = @_;
+	
+	$self->{_sth} = $self->{_dbh}->prepare($sql_statements->{set_album_parent});
+	$self->{_sth}->execute($parent_id, $albumid);
+	$self->{_sth}->finish();
+}
+
+
+
 
 1;

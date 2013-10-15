@@ -5,13 +5,15 @@
 </switch>
 
 <path>
-	working_folder = /srv/bilder/imagelol
+	working_folder = /srv/images/imagelol
 	log_folder = $working_folder/logs
 	temp_folder = $working_folder/temp
 	logfile_prefix = imagelol
-	import_folder = /srv/bilder/import
-	original_folder = /srv/bilder/arkiv/original
-	preview_folder = /srv/bilder/arkiv/preview
+	import_folder = /srv/images/import
+	original_folder = /srv/images/archive/original
+	preview_folder = /srv/images/archive/preview
+	www_base = /srv/vhosts/example.domain.com/albums
+	www_original = /srv/vhosts/example.domain.com/some/other/folder
 </path>
 
 <div>
@@ -29,6 +31,7 @@
 	imagenumber = (IMG\\_|\\_MG\\_|DSCN|JHT\\_)([0-9]+).+
 	album_name = [a-zA-Z0-9\\ \\.\\-\\_\\&\\(\\)\\[\\]]+
 	img_range = ([0-9]+|([0-9]+(\\,|\\-){1}[0-9]+)){1}([0-9]+|([0-9]+(\\,|\\-){1}[0-9]+))*
+	parent_id = [0-9]+
 	range = [0-9]+\\-[0-9]+
 	single = [0-9]+
 	strict_filename = (IMG\\_|\\_MG\\_|DSCN|JHT\\_)[0-9]+
@@ -56,4 +59,6 @@
 	echo = /bin/echo
 	convert = /usr/bin/convert
 	exiftool = /usr/bin/exiftool
+	find = /usr/bin/find
+	ln = /bin/ln
 </binaries>

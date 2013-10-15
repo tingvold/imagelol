@@ -4,6 +4,7 @@ use warnings;
 use lib "/opt/local/lib/perl5/site_perl/5.12.4";
 use Getopt::Long;
 use File::Find;
+use File::Basename;
 use Data::Dumper;
 
 # Load imagelol
@@ -16,23 +17,23 @@ my %config = $imagelol->get_config();
 
 # Log
 sub log_it{
-	$imagelol->log_it("make-album", "@_");
+	$imagelol->log_it("album-tool", "@_");
 }
 
 # Logs debug-stuff if debug has been turned on
 sub debug_log{
-	$imagelol->debug_log("make-album", "@_");
+	$imagelol->debug_log("album-tool", "@_");
 }
 
 # Logs error-stuff
 sub error_log{
-	$imagelol->error_log("make-album", "@_");
+	$imagelol->error_log("album-tool", "@_");
 	return 0;
 }
 
 # Get options
-my (	$path_search, $img_range, $album_name, $album_description,
-	$category, $delete_range, $list, $generate, $empty_album, $parent_id);
+my (	$path_search, $img_range, $album_name, $album_description, $category,
+	$delete, $list, $generate, $empty_album, $parent_id);
 
 if (@ARGV > 0) {
 	GetOptions(
@@ -42,7 +43,7 @@ if (@ARGV > 0) {
 	'd|desc|description=s'	=> \$album_description,	# description of album
 	'c|cat|category=s'	=> \$category,		# define category -- use default if not defined
 	'p|parent=s'		=> \$parent_id,		# set a parent id for this album
-	'delete'		=> \$delete_range,	# disable all image ranges
+	'delete'		=> \$delete,		# disable all image ranges, or remove parent id
 	'list|print'		=> \$list,		# list all albums
 	'gen|generate|cron'	=> \$generate,		# generate symlinks
 	'empty'			=> \$empty_album,	# make empty album
@@ -52,8 +53,8 @@ if (@ARGV > 0) {
 #########
 ######### TODO
 #########
-## - List detailed info about specific album (i.e. all active image-ranges + all images?)
-## - Be able to define parent id for an album (both with new album, and with update (similar to description-update))
+## - List detailed info about specific album (i.e. all active image-ranges + all images + number of images)
+## - Show number of images per album on the album-list
 ## - Make symlinks of folders/albums
 ## 	- Use recursion to build the trees/folder-structure for the albums/sub-albums
 
@@ -70,7 +71,7 @@ sub fix_album{
 			# Default is to add the range to current ranges
 			# However, if we want to delete (i.e. overwrite) the current images in an
 			# album with a new range, we can use this
-			if($delete_range){
+			if($delete){
 				# We disable all previous ranges, and update with current images
 				$imagelol->disable_album_ranges($album->{albumid});
 				log_it("Since deletion was used, all previous ranges for album '$album_name' has now been disabled.");
@@ -108,12 +109,7 @@ sub fix_album{
 			add_new_album($images);
 		}
 	} else {
-		if($empty_album){
-			# just add album
-			add_new_album();
-		} else {
-			error_log("No images found for the range '$img_range' with search '$path_search'.");
-		}
+		error_log("No images found for the range '$img_range' with search '$path_search'.");
 	}
 }
 
@@ -175,7 +171,7 @@ sub add_new_album{
 	$album_description = '' unless $album_description; # done to avoid uninitialized-error
 
 	# Create album -- albumid of created album is returned
-	my $albumid = $imagelol->add_album($album_name, $album_description);
+	my $albumid = $imagelol->add_album($album_name, $album_description, $parent_id);
 	
 	if($empty_album){
 		# empty album is to be added, do nothing more
@@ -199,9 +195,43 @@ sub update_album_description{
 	if($album){
 		# Album exists
 		$imagelol->set_album_description($album->{albumid}, $album_description);
+		log_it("Set description for album '$album_name' to '$album_description'.");
 	} else {
 		# Album doesn't exist
 		error_log("No album found matching that name ($album_name).");
+	}
+}
+
+# Update $parent_id on album
+sub update_album_parent{
+	my $album = $imagelol->get_album($album_name);
+	if($album){
+		# Album exists
+		my $parent_id_print = $parent_id;
+		if($delete){
+			# We want to remove parent id from current album
+			# Set $parent_id to 'NULL'.
+			$parent_id = '';
+			$parent_id_print = 'NULL';
+		}
+		
+		$imagelol->set_album_parent($album->{albumid}, $parent_id);
+		log_it("Set parent id for album '$album_name' to '$parent_id_print'.");
+	} else {
+		# Album doesn't exist
+		error_log("No album found matching that name ($album_name).");
+	}
+}
+
+# Add empty album
+sub add_empty_album{
+	my $album = $imagelol->get_album($album_name);
+	if($album){
+		# Album exists
+		error_log("Trying to add a new album, but album with name '$album_name' already exists.");
+	} else {
+		# Album doesn't exist
+		add_new_album();
 	}
 }
 
@@ -233,12 +263,12 @@ sub list_albums{
 	if((scalar keys %$albums) > 0){
 		# We have albums -- go through them one-by-one, sorted by date added
 		print("\n\n\n");
-		printf("%-20s %-40s %-40s %-10s %-20s\n", "albumid", "name", "description", "parent", "added");
+		printf("%-20s %-40s %-40s %-10s %-35s %-10s\n", "albumid", "name", "description", "parent", "added", "# of images");
 
-		my $n = 145;
+		my $n = 165;
 		print_line($n, "-");
 		
-		foreach my $albumid (sort { $albums->{$a}->{added} cmp $albums->{$b}->{added} } keys %$albums){
+		foreach my $albumid (sort { $albums->{$b}->{added} cmp $albums->{$a}->{added} } keys %$albums){
 			unless($albums->{$albumid}->{parent}){
 				# Only do this to the primary albums (i.e. without a parent)
 				print_album_line($albums, $albumid);
@@ -266,7 +296,7 @@ sub print_album_childs{
 		$level = 1;
 	}
 
-	foreach my $albumid (keys %$albums){
+	foreach my $albumid (sort { $albums->{$b}->{added} cmp $albums->{$a}->{added} } keys %$albums){
 		if($albums->{$albumid}->{parent}){
 			# we have an album with a parent defined
 			if($albums->{$albumid}->{parent} == $parent_albumid){
@@ -310,18 +340,135 @@ sub print_album_line{
 	}
 	
 	my $newalbumid = $level_string . $albumid;
-		
-	printf("%-20s %-40s %-40s %-10s %-20s\n",
+	
+	printf("%-20s %-40s %-40s %-10s %-35s %-10s\n",
 			$newalbumid,
 			$albumname,
 			$description,
 			$parent,
-			$albums->{$albumid}->{added});
+			$albums->{$albumid}->{added},
+			$albums->{$albumid}->{image_count});
 }
 
 # Generate all the symlinks
 sub generate_symlinks{
+	# General thought here is to iterate through all the albums, generate the
+	# symlinks needed (but don't act on them). Then we iterate through all existing
+	# symlinks. We then compare the two, and delete/add at the end.
+
+	# Get all albums
+	my $albums = $imagelol->get_albums();
 	
+	# All images from DB
+	my %images_from_db;
+	
+	if((scalar keys %$albums) > 0){
+		# We have albums -- go through them one-by-one
+		
+		foreach my $albumid ( keys %$albums ){
+			# add album-info to hash
+			$images_from_db{$albumid}{albumname} = $albums->{$albumid}->{name};
+
+			# find album images
+			my $album_images = $imagelol->get_album_images($albumid);
+			
+			foreach my $imageid ( keys %$album_images ){
+				# alter image src, so that it fits our www-scheme
+				my $image_src = $album_images->{$imageid}->{path_preview};
+				$image_src =~ s/^$config{path}->{preview_folder}//i; # remove the original prefix
+				$image_src = $config{path}->{www_original} . $image_src; # add new prefix
+
+				# alter image dst, so that it fits our www-scheme
+				my $image_dst_path = $config{path}->{www_base}; # base prefix
+				$image_dst_path .= "/" . $albums->{$albumid}->{name}; # album name
+							
+				# image name
+				my $image_name = basename($album_images->{$imageid}->{path_preview}); # get only filename
+				
+				# full path
+				my $image_dst = $image_dst_path . "/" . $image_name;
+				
+				my %image = (
+					image_src => $image_src,
+					image_dst_path => $image_dst_path,
+					image_name => $image_name,
+				);
+				
+				# add to hash
+				$images_from_db{$albumid}{images}{$image_dst} = \%image;				
+			}
+		}
+	} else {
+		exit error_log("No albums found...");
+	}
+	
+	# All images on filesystem
+	my %images_on_file;
+	
+	# Add images on filesystem to the hash
+	foreach my $symlink ($imagelol->system_find_symlinks($config{path}->{www_base})){
+		chomp($symlink);
+		$images_on_file{$symlink} = 1;
+	}
+	
+	# Compare the two -- database is authorative
+	foreach my $albumid ( keys %images_from_db ){
+		# compare each image
+		foreach my $albumimage ( keys %{$images_from_db{$albumid}->{images}} ){
+			if($images_on_file{$albumimage}){
+				# Entry exists in both DB and filesystem
+				# Delete from both places
+				delete($images_from_db{$albumid}{images}{$albumimage});
+				delete($images_on_file{$albumimage});
+			}
+		}
+	}
+	
+	# At this point we should have two hashes; one with
+	# all images currentl in the DB, that is not present
+	# on the filesystem, and another with the images present
+	# on the filesystem, but no on the DB.
+	
+	# Delete symlinks from filesystem
+	delete_symlinks(\%images_on_file);
+	
+	# Add images from database
+	add_symlinks(\%images_from_db);
+}
+
+# Delete all symlinks from filesystem
+sub delete_symlinks{
+	my $files = shift;
+	
+	foreach my $file ( keys %$files ){
+		if($imagelol->system_rm($file)){
+			debug_log("Successfully removed symlink to '$file'.");
+		} else {
+			return error_log("Could not remove symlink '$file'.");
+		}
+	}
+}
+
+# Add all symlinks from DB
+sub add_symlinks{
+	my $files = shift;
+	
+	foreach my $albumid ( keys %$files ){
+		# compare each image
+		foreach my $albumimage ( keys %{$files->{$albumid}{images}} ){
+			my $dst_dir = $files->{$albumid}{images}{$albumimage}{image_dst_path};
+			my $file_src = $files->{$albumid}{images}{$albumimage}{image_src};
+			
+			if(-e "$albumimage"){
+				return error_log("Image destination '$albumimage' exists. Should not happen.");
+			} else {
+				# make symlink
+				$imagelol->system_ln($file_src, $albumimage);
+			}
+
+			
+		}
+	}
 }
 
 # We only want 1 instance of this script running
@@ -362,12 +509,49 @@ if($list || $generate){
 			exit error_log("Invalid album name.");
 		}
 	}
+	
+	# If $parent_id, needs to be valid + exist
+	if(defined($parent_id)){
+		if($parent_id =~ m/^$config{regex}->{parent_id}$/){
+			# check if album exists
+			unless($imagelol->album_exists($parent_id)){
+				# album doesn't exist
+				if($delete){
+					# don't warn if we are to delete parent id
+					if($empty_album){
+						# but warn if we try to create empty album at the same time
+						exit error_log("Can't add empty album when '-delete' parameter specified.");
+					}
+				} else {
+					exit error_log("Parent id doesn't exist.");
+				}
+			}
+		} else {
+			exit error_log("Invalid parent id.");
+		}
+	}
+	
+	# If empty album is to be added
+	if($empty_album){
+		if($album_name){
+			# only do this if we actually have $album_name
+			add_empty_album();
+			exit 1;
+		} else {			
+			exit error_log("Need to fill out all the required parameters.");
+		}
+	}
 
 	# Update album description only
-	if(($album_name && $album_description) && !$path_search && !$img_range && !$delete_range){
+	if(($album_name && $album_description) && !$path_search && !$img_range && !$delete){
 		update_album_description();
-		log_it("Set description for album '$album_name' to '$album_description'.");
-		exit 0;
+		exit 1;
+	}
+	
+	# Update parent_id only
+	if(($album_name && defined($parent_id)) && !$path_search && !$img_range && !$album_description){
+		update_album_parent();
+		exit 1;
 	}
 
 	# Need at least these three if we are to do anything more
