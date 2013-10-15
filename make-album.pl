@@ -32,7 +32,7 @@ sub error_log{
 
 # Get options
 my (	$path_search, $img_range, $album_name, $album_description,
-	$category, $delete_range, $list, $generate, $empty_album);
+	$category, $delete_range, $list, $generate, $empty_album, $parent_id);
 
 if (@ARGV > 0) {
 	GetOptions(
@@ -41,7 +41,7 @@ if (@ARGV > 0) {
 	'a|album=s'		=> \$album_name,	# name of the album
 	'd|desc|description=s'	=> \$album_description,	# description of album
 	'c|cat|category=s'	=> \$category,		# define category -- use default if not defined
-	'p|parent=s'		=> \$parent_id		# set a parent id for this album
+	'p|parent=s'		=> \$parent_id,		# set a parent id for this album
 	'delete'		=> \$delete_range,	# disable all image ranges
 	'list|print'		=> \$list,		# list all albums
 	'gen|generate|cron'	=> \$generate,		# generate symlinks
