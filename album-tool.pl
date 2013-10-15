@@ -55,8 +55,7 @@ if (@ARGV > 0) {
 #########
 ## - List detailed info about specific album (i.e. all active image-ranges + all images + number of images)
 ## - Show number of images per album on the album-list
-## - Make symlinks of folders/albums
-## 	- Use recursion to build the trees/folder-structure for the albums/sub-albums
+
 
 
 # Add images to album -- create album if needed
