@@ -459,6 +459,15 @@ sub add_symlinks{
 			my $dst_dir = $files->{$albumid}{images}{$albumimage}{image_dst_path};
 			my $file_src = $files->{$albumid}{images}{$albumimage}{image_src};
 			
+			# Directory
+			unless (-d "$dst_dir"){
+				# create directory
+				debug_log("Creating directory '$dst_dir'.");
+				$imagelol->system_mkdir($dst_dir)
+					or return error_log("Could not create directory '$dst_dir'.");
+			}
+			
+			# Symlink
 			if(-e "$albumimage"){
 				return error_log("Image destination '$albumimage' exists. Should not happen.");
 			} else {
