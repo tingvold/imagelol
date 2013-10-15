@@ -536,6 +536,8 @@ sub get_image_range{
 	
 	$query .= ' ) ORDER BY imagenumber ASC';
 	
+	print "$query\n";
+	
 	$self->{_sth} = $self->{_dbh}->prepare($query);
 	$self->{_sth}->execute();
 	
