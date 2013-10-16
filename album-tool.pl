@@ -60,6 +60,9 @@ if (@ARGV > 0) {
 #########
 ## - List detailed info about specific album (i.e. all active image-ranges + all images + number of images)
 ## - Disable/enable album from CLI
+## - Download album as .zip-file?
+## 	- Make a .zip-file with unique URL, only available for X hours or X days, before it's deleted?
+##	- Password protect?
 
 
 # Add images to album -- create album if needed
@@ -271,7 +274,7 @@ sub list_albums{
 		print("\n\n\n");
 		printf("%-20s %-40s %-40s %-10s %-35s %-10s %-10s\n", "albumid", "name", "description", "parent", "added", "enabled", "# of images");
 
-		my $n = 165;
+		my $n = 175;
 		print char_repeat($n, "-") . "\n";
 		
 		# only print last 10 albums by default
