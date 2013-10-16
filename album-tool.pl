@@ -279,11 +279,11 @@ sub list_albums{
 		
 		foreach my $albumid (sort { $albums->{$b}->{added} cmp $albums->{$a}->{added} } keys %$albums){
 			unless($albums->{$albumid}->{parent}){
-				# count primary albums printed
-				$album_count++;
-				
-				# exit if more than 10
 				unless($list_all){
+					# count primary albums printed
+					$album_count++;
+					
+					# exit if more than 10
 					last if ($album_count > 10);
 				}
 				
