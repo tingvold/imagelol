@@ -515,6 +515,7 @@ sub add_symlinks{
 				return error_log("Image destination '$albumimage' exists. Should not happen.");
 			} else {
 				# make symlink
+				debug_log("Creating symlink from  '$file_src' to '$albumimage'.");
 				$imagelol->system_ln($file_src, $albumimage);
 			}
 
