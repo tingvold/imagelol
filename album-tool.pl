@@ -36,7 +36,7 @@ my %images_from_db;
 
 # Get options
 my (	$path_search, $img_range, $album_name, $album_description, $category,
-	$delete, $list, $generate, $empty_album, $parent_id);
+	$delete, $list, $generate, $empty_album, $parent_id, $disable_album);
 
 if (@ARGV > 0) {
 	GetOptions(
@@ -50,6 +50,7 @@ if (@ARGV > 0) {
 	'list|print'		=> \$list,		# list all albums
 	'gen|generate|cron'	=> \$generate,		# generate symlinks
 	'empty'			=> \$empty_album,	# make empty album
+	'disable'		=> \$disable_album,	# disable specified album
 	)
 }
 
@@ -57,7 +58,7 @@ if (@ARGV > 0) {
 ######### TODO
 #########
 ## - List detailed info about specific album (i.e. all active image-ranges + all images + number of images)
-
+## - Disable/enable album from CLI
 
 
 # Add images to album -- create album if needed
