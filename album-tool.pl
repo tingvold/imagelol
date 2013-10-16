@@ -267,7 +267,7 @@ sub list_albums{
 	if((scalar keys %$albums) > 0){
 		# We have albums -- go through them one-by-one, sorted by date added
 		print("\n\n\n");
-		printf("%-20s %-40s %-40s %-10s %-35s %-10s\n", "albumid", "name", "description", "parent", "added", "# of images");
+		printf("%-20s %-40s %-40s %-10s %-35s %-10s %-10s\n", "albumid", "name", "description", "parent", "added", "enabled", "# of images");
 
 		my $n = 165;
 		print char_repeat($n, "-") . "\n";
@@ -351,6 +351,7 @@ sub print_album_line{
 	$string .= space_pad(41, $description);
 	$string .= space_pad(11, $parent);
 	$string .= space_pad(36, $albums->{$albumid}->{added});
+	$string .= space_pad(11, $albums->{$albumid}->{enabled});
 	$string .= space_pad(11, $albums->{$albumid}->{image_count});
 	print "$string\n";
 }
@@ -368,17 +369,20 @@ sub generate_symlinks{
 		# We have albums -- go through them one-by-one
 		
 		foreach my $albumid ( keys %$albums ){
-			unless($albums->{$albumid}->{parent}){
-				# album without parent defined -- these are our root albums
+			if($albums->{$albumid}->{enabled}){
+				# only add enabled albums
+				unless($albums->{$albumid}->{parent}){
+					# album without parent defined -- these are our root albums
 				
-				# add album-info to hash
-				$images_from_db{$albumid}{albumname} = $albums->{$albumid}->{name};
+					# add album-info to hash
+					$images_from_db{$albumid}{albumname} = $albums->{$albumid}->{name};
 				
-				# add all images
-				get_album_images($albumid, $albums->{$albumid}->{name});
+					# add all images
+					get_album_images($albumid, $albums->{$albumid}->{name});
 				
-				# add all childs recursively
-				get_album_childs($albums, $albumid, $albums->{$albumid}->{name});
+					# add all childs recursively
+					get_album_childs($albums, $albumid, $albums->{$albumid}->{name});
+				}
 			}
 		}
 	} else {
