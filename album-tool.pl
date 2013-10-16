@@ -36,7 +36,7 @@ my %images_from_db;
 
 # Get options
 my (	$path_search, $img_range, $album_name, $album_description, $category,
-	$delete, $list, $generate, $empty_album, $parent_id, $disable_album);
+	$delete, $list, $generate, $empty_album, $parent_id, $disable_album, $list_all);
 
 if (@ARGV > 0) {
 	GetOptions(
@@ -47,7 +47,8 @@ if (@ARGV > 0) {
 	'c|cat|category=s'	=> \$category,		# define category -- use default if not defined
 	'p|parent=s'		=> \$parent_id,		# set a parent id for this album
 	'delete'		=> \$delete,		# disable all image ranges, or remove parent id
-	'list|print'		=> \$list,		# list all albums
+	'list|print'		=> \$list,		# list latest 10 albums
+	'all'			=> \$list_all,		# list all albums
 	'gen|generate|cron'	=> \$generate,		# generate symlinks
 	'empty'			=> \$empty_album,	# make empty album
 	'disable'		=> \$disable_album,	# disable specified album
@@ -273,8 +274,19 @@ sub list_albums{
 		my $n = 165;
 		print char_repeat($n, "-") . "\n";
 		
+		# only print last 10 albums by default
+		my $album_count = 0;
+		
 		foreach my $albumid (sort { $albums->{$b}->{added} cmp $albums->{$a}->{added} } keys %$albums){
 			unless($albums->{$albumid}->{parent}){
+				# count primary albums printed
+				$album_count++;
+				
+				# exit if more than 10
+				unless($list_all){
+					last if ($album_count > 10);
+				}
+				
 				# Only do this to the primary albums (i.e. without a parent)
 				print_album_line($albums, $albumid);
 								
