@@ -63,6 +63,8 @@ if (@ARGV > 0) {
 ## - Download album as .zip-file?
 ## 	- Make a .zip-file with unique URL, only available for X hours or X days, before it's deleted?
 ##	- Password protect?
+## - Make all images from /dates/ available as direct links ( '$URL/direct/md5sum_$imgname' or similar)
+## 	- "Hidden" albums as well, using the same approach? ( '$URL/direct/album/md5sum_$album_name' or something)
 
 
 # Add images to album -- create album if needed
@@ -625,6 +627,11 @@ if($list || $generate){
 	if(($album_name && defined($parent_id)) && !$path_search && !$img_range && !$album_description){
 		update_album_parent();
 		exit 1;
+	}
+	
+	# Set default search-path (current year + month)
+	unless($path_search){
+		$path_search = $imagelol->date_string_ym();
 	}
 
 	# Need at least these three if we are to do anything more

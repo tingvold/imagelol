@@ -199,6 +199,11 @@ sub date_string_ymd{
 	return POSIX::strftime("%Y-%m-%d", localtime(time()));
 }
 
+# Returns YYYY/MM
+sub date_string_ym{
+	return POSIX::strftime("%Y/%m", localtime(time()));
+}
+
 sub get_error_value{
 	return $error;
 }
