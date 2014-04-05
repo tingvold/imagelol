@@ -46,7 +46,7 @@ if (@ARGV > 0) {
 	's|src|source=s'	=> \$src_dir,		# the source of the images to be imported
 	'c|cat|category=s'	=> \$category,		# category to put the images in
 	'f|force'		=> \$force_copy,	# force copy/update, even if destination exist
-	'date'			=> \$date_override,	# override date of files being added
+	'date=s'		=> \$date_override,	# override date of files being added
 	)
 }
 
