@@ -40,18 +40,26 @@ sub error_log{
 }
 
 # Get options
-my ($src_dir, $dst_dir, $category, $force_copy);
+my ($src_dir, $dst_dir, $category, $force_copy, $date_override);
 if (@ARGV > 0) {
 	GetOptions(
 	's|src|source=s'	=> \$src_dir,		# the source of the images to be imported
 	'c|cat|category=s'	=> \$category,		# category to put the images in
 	'f|force'		=> \$force_copy,	# force copy/update, even if destination exist
+	'date'			=> \$date_override,	# override date of files being added
 	)
 }
 
 # Set paths from config, unless provided as parameter
 if ($category){
 	die error_log("Invalid category. Only numbers and letters allowed.") unless ($category =~ m/^[a-zA-Z0-9]+$/);
+}
+
+# Check if valid date is entered; 2012-03-04
+if ($date_override){
+	unless ($date_override =~ m/^[0-9]{4}\:[0-9]{2}\:[0-9]{2}$/){
+		die error_log("Invalid date entered ($date_override). Should look like 'YYYY:MM:DD'. Try again.");
+	}
 }
 
 $category = $config{div}->{default_category} unless $category;
@@ -119,6 +127,7 @@ sub process_image{
 
 			if ($exif_tags->{'DateTimeOriginal'} =~ m/^[0-9]{4}\:[0-9]{2}\:[0-9]{2}\s+/){
 				($date, $time) = (split(' ', $exif_tags->{'DateTimeOriginal'}));
+				$date = $date_override if $date_override; # override if specified
 				($full_date = $date) =~ s/\:/-/g;
 				$full_date .= " " . $time;
 			}
@@ -128,6 +137,7 @@ sub process_image{
 			
 			if ($exif_tags->{'FileModifyDate'} =~ m/^[0-9]{4}\:[0-9]{2}\:[0-9]{2}\s+/){
 				($date, $time) = (split(' ', $exif_tags->{'FileModifyDate'}));
+				$date = $date_override if $date_override; # override if specified
 				($full_date = $date) =~ s/\:/-/g;
 				$full_date .= " " . $time;
 			}
@@ -143,6 +153,7 @@ sub process_image{
 
 			# Use YYYY:MM:DD, so that it's the same output as EXIF
 			$date = POSIX::strftime("%Y:%m:%d", localtime(stat($image->{org_src})->ctime()));
+			$date = $date_override if $date_override; # override if specified
 			$full_date = POSIX::strftime("%Y-%m-%d %H:%M:%S", localtime(stat($image->{org_src})->ctime()));
 		}
 

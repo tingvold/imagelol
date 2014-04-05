@@ -52,6 +52,7 @@ if (@ARGV > 0) {
 	'gen|generate|cron'	=> \$generate,		# generate symlinks
 	'empty'			=> \$empty_album,	# make empty album
 	'disable'		=> \$disable_album,	# disable specified album
+	'enable'		=> \$enable_album,	# enable specified album
 	)
 }
 
@@ -544,6 +545,27 @@ sub add_symlinks{
 			
 		}
 	}
+}
+
+# ZIP an entire album on-the-fly
+sub zip_album{
+	my $path = "path/to/file/";
+	my $filename = "data.zip";
+	my $zip = Archive::Zip->new();
+	$zip->addTree( $path, '' );
+
+	# header
+	#Content-type: application/zip\n"
+	#"Content-Disposition: attachment; filename=\"$filename\"\n\n";
+
+	# set binmode
+	binmode STDOUT;
+	
+	# flush headers
+	$|=1;
+	
+	# sendt to browser
+	$zip->writeToFileHandle( \*STDOUT, 0 );
 }
 
 # We only want 1 instance of this script running
