@@ -308,7 +308,7 @@ sub list_albums{
 		}
 		
 		print char_repeat($n, "-") . "\n";
-		printf ("%s%*s>", "Total number of images", $n, $img_count);
+		printf ("%*s\n", $n, "Total number of images: $img_count");
 		print("\n\n");
 	} else {
 		log_it("No albums found...");
