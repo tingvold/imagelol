@@ -272,6 +272,7 @@ sub space_pad{
 sub list_albums{
 	# Get all albums
 	my $albums = $imagelol->get_albums();
+	my $img_count;
 	
 	if((scalar keys %$albums) > 0){
 		# We have albums -- go through them one-by-one, sorted by date added
@@ -299,11 +300,15 @@ sub list_albums{
 								
 				# Let's find all the childs for this album
 				print_album_childs($albums, $albumid);
+				
+				# Summarize total images
+				$img_count += $albums->{$albumid}->{image_count};
 			}
 			# at this point we should be done
 		}
 		
 		print char_repeat($n, "-") . "\n";
+		printf ("%s%*s>", "Total number of images", $n, $img_count);
 		print("\n\n");
 	} else {
 		log_it("No albums found...");
