@@ -36,7 +36,8 @@ my %images_from_db;
 
 # Get options
 my (	$path_search, $img_range, $album_name, $album_description, $category,
-	$delete, $list, $generate, $empty_album, $parent_id, $disable_album, $list_all);
+	$delete, $list, $generate, $empty_album, $parent_id, $disable_album, 
+	$enable_album, $list_all);
 
 if (@ARGV > 0) {
 	GetOptions(
