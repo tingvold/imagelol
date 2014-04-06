@@ -457,16 +457,18 @@ sub get_album_childs{
 			# we have an album with a parent defined
 			if($albums->{$albumid}->{parent} == $parent_albumid){
 				# we have a child for the parent album
-				# add it + all of it's childs
+				if($albums->{$albumid}->{enabled}){
+					# if enabled, add it + all of it's childs
 				
-				# summarize the album path
-				my $new_album_path = $album_path . "/" . $albums->{$albumid}->{name};
+					# summarize the album path
+					my $new_album_path = $album_path . "/" . $albums->{$albumid}->{name};
 				
-				# add all images
-				get_album_images($albumid, $new_album_path);
+					# add all images
+					get_album_images($albumid, $new_album_path);
 							
-				# Look for more childs recursively
-				get_album_childs($albums, $albumid, $new_album_path);
+					# Look for more childs recursively
+					get_album_childs($albums, $albumid, $new_album_path);
+				}
 			}
 		}
 	}	
