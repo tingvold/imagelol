@@ -300,7 +300,7 @@ sub process_image{
 		}
 		
 		# Add to image hash, so we can add to DB later on
-		(my $imagenumber = $image->{pretty_filename}) =~ s/^$config{regex}->{imagenumber}$/$2/;
+		(my $imagenumber = $image->{pretty_filename}) =~ s/^$config{regex}->{imagenumber}$/$2/i;
 		my %image_info : shared = (
 			image_file => $image->{pretty_filename},
 			original_file => $image_dst_file,
