@@ -63,6 +63,7 @@ if ($date_override){
 	}
 }
 
+$desc = '' unless $desc;
 $category = $config{div}->{default_category} unless $category;
 $src_dir = $config{path}->{import_folder} unless $src_dir;
 $dst_dir = $config{path}->{original_folder} . "/" . $category;
