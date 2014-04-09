@@ -234,6 +234,7 @@ sub process_image{
 			if (defined($exif_tags->{'FileType'})){
 				# we have a filetype -- let's use that
 				my $filetype = lc($exif_tags->{'FileType'});
+				$filetype = "jpg" if($filetype =~ m/jpeg/i);
 				$jpg_filename .= ".$filetype";
 			} else {
 				# no value -- assume .jpg
@@ -269,6 +270,10 @@ sub process_image{
 		# Copy EXIF-data from source, into preview
 		$imagelol->copy_exif($image->{org_src}, $jpg_dst)
 			or return error_log("Could not copy EXIF data from '$image->{org_src}' to '$jpg_dst'.");
+			
+		# Copy timestamp from source, into preview
+		# This is used if no EXIF-data exists
+		
 
 		# Rotate full preview (if needed)
 		# http://sylvana.net/jpegcrop/exif_orientation.html
