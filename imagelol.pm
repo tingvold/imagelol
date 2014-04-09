@@ -459,6 +459,18 @@ sub copy_exif{
 	(system("$config{binaries}->{exiftool} -m -q -overwrite_original -tagsfromfile \"$src\" --makernotecanon \"$dst\"") == 0) or die("Could not copy EXIF-info from '$src' to '$dst'...");
 }
 
+# Copy timestamp
+sub copy_timestamp{
+	if ($_[0] =~ m/HASH/){
+		#Value is a reference on an anonymous hash
+		shift; # Remove class that is passed to the subroutine
+	}
+	
+	my ($src, $dst) = @_;
+	
+	(system("$config{binaries}->{touch} -r \"$src\" \"$dst\"") == 0) or die("Could not copy EXIF-info from '$src' to '$dst'...");
+}
+
 # Add image to database
 sub add_image{
 	my $self = shift;

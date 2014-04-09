@@ -272,8 +272,9 @@ sub process_image{
 			or return error_log("Could not copy EXIF data from '$image->{org_src}' to '$jpg_dst'.");
 			
 		# Copy timestamp from source, into preview
-		# This is used if no EXIF-data exists
-		
+		# This is used by gallery if no EXIF-data exists
+		$imagelol->copy_timestamp($image->{org_src}, $jpg_dst)
+			or return error_log("Could not copy timestamp from '$image->{org_src}' to '$jpg_dst'.");
 
 		# Rotate full preview (if needed)
 		# http://sylvana.net/jpegcrop/exif_orientation.html
