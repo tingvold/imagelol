@@ -40,11 +40,12 @@ sub error_log{
 }
 
 # Get options
-my ($src_dir, $dst_dir, $category, $force_copy, $date_override);
+my ($src_dir, $dst_dir, $category, $desc, $force_copy, $date_override);
 if (@ARGV > 0) {
 	GetOptions(
 	's|src|source=s'	=> \$src_dir,		# the source of the images to be imported
 	'c|cat|category=s'	=> \$category,		# category to put the images in
+	'd|desc|description=s'	=> \$desc,		# add comment/description to imported images
 	'f|force'		=> \$force_copy,	# force copy/update, even if destination exist
 	'date=s'		=> \$date_override,	# override date of files being added
 	)
@@ -344,7 +345,8 @@ sub db_add_images{
 						$images{$imageid}->{full_date},
 						$images{$imageid}->{category},
 						$images{$imageid}->{preview_file},
-						$images{$imageid}->{imagenumber} )){
+						$images{$imageid}->{imagenumber},
+						$desc )){
 			# All OK
 			log_it("Added image '$images{$imageid}->{image_file}' to the DB.");
 			
