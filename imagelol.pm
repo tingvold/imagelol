@@ -370,7 +370,6 @@ sub copy_stuff{
 	my $self = shift;
 	my ($source, $dest) = @_;
 	
-	debug_log("Copying '$source' to '$dest'...");
 	(system("$config{binaries}->{cp} -p \"$source\" \"$dest\"") == 0) or return 0;
 	return 1;
 }
@@ -529,7 +528,9 @@ sub get_image_range{
 			$valid_ranges++;
 		} else {
 			# not valid
-			log_it("imagelol", "'$range' is not a valid IMG-range. Ignoring.");
+			exiftool -m -overwrite_original "-AllDates=2003:10:15 00:00:00" Ukjent2/*
+			touch -t 0310150000 Ukjent2/*
+			("imagelol", "'$range' is not a valid IMG-range. Ignoring.");
 			next;
 		}
 	}
