@@ -33,7 +33,7 @@ my $error = 0;
 
 my $sql_statements = {
 	add_image =>		"	INSERT 	INTO images
-						(imagename, path_original, imagedate, category, path_preview, imagenumber, desc)
+						(imagename, path_original, imagedate, category, path_preview, imagenumber, description)
 
 					VALUES 	(?, ?, ?, ?, ?, ?, ?)
 				",
