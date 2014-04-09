@@ -528,9 +528,7 @@ sub get_image_range{
 			$valid_ranges++;
 		} else {
 			# not valid
-			exiftool -m -overwrite_original "-AllDates=2003:10:15 00:00:00" Ukjent2/*
-			touch -t 0310150000 Ukjent2/*
-			("imagelol", "'$range' is not a valid IMG-range. Ignoring.");
+			log_it("imagelol", "'$range' is not a valid IMG-range. Ignoring.");
 			next;
 		}
 	}
