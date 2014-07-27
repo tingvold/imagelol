@@ -57,6 +57,12 @@ my $sql_statements = {
 
 					WHERE 	((LOWER(name)) = (LOWER(?)))
 				",
+	get_album_by_id =>	"	SELECT 	*
+
+					FROM 	albums
+
+					WHERE 	(albumid = ?)
+				",
 	get_albums =>		"	SELECT 	*,
 						(
 							SELECT 	COUNT (*)
@@ -605,6 +611,20 @@ sub get_album{
 	
 	return $albuminfo;
 }
+
+# fetch album info by id
+sub get_album_by_id{
+	my $self = shift;
+	my $albumid = shift;
+	
+	$self->{_sth} = $self->{_dbh}->prepare($sql_statements->{get_album_by_id});
+	$self->{_sth}->execute($albumid);
+	
+	my $albuminfo = $self->{_sth}->fetchrow_hashref();
+	$self->{_sth}->finish();
+	
+	return $albuminfo;
+} 
 
 # Get all albums
 sub get_albums{
