@@ -565,6 +565,33 @@ sub get_image_range{
 	return $images;
 }
 
+# Merge all image ranges for album
+sub merge_image_ranges{
+	my $self = shift;
+	my ($images, $album, $album_name, $img_range, $category) = @_;
+
+	my $enabled_ranges = get_album_ranges($self, $album->{albumid});
+
+	foreach my $rangeid ( keys %$enabled_ranges ){
+		my $old_range = $enabled_ranges->{$rangeid}->{imagerange};
+		my $old_search = $enabled_ranges->{$rangeid}->{path_search};
+		my $old_category = $enabled_ranges->{$rangeid}->{category};
+						
+		# Get old images
+		my $old_images = get_image_range($self, $old_range, $old_search, $old_category);
+	
+		if((scalar keys %$old_images) > 0){
+			# We got old images, lets merge them
+			log_it("imagelol", "Merging image-range '$old_range [$old_category]' with provided range ($img_range [$category]).");
+			$images = { %$images, %$old_images };
+		} else {
+			error_log("imagelol", "No images found for the album '$album_name' with range '$old_range [$old_category]' and search '$old_search'.");
+		}
+	}
+	
+	return $images;
+}
+
 # Fetch album info
 sub get_album{
 	my $self = shift;

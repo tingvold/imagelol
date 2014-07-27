@@ -88,24 +88,7 @@ sub fix_album{
 			log_it("Since deletion was used, all previous ranges for album '$album_name' has now been disabled.");
 		} else {
 			# Do this for each enabled range for this album
-			my $enabled_ranges = $imagelol->get_album_ranges($album->{albumid});
-			
-			foreach my $rangeid ( keys %$enabled_ranges ){
-				my $old_range = $enabled_ranges->{$rangeid}->{imagerange};
-				my $old_search = $enabled_ranges->{$rangeid}->{path_search};
-				my $old_category = $enabled_ranges->{$rangeid}->{category};
-									
-				# Get old images
-				my $old_images = $imagelol->get_image_range($old_range, $old_search, $old_category);
-				
-				if((scalar keys %$old_images) > 0){
-					# We got old images, lets merge them
-					log_it("Merging image-range '$old_range [$old_category]' with provided range ($img_range [$category]).");
-					$images = { %$images, %$old_images };
-				} else {
-					error_log("No images found for the album '$album_name' with range '$old_range [$old_category]' and search '$old_search'.");
-				}
-			}
+			$images = $imagelol->merge_image_ranges($images, $album, $album_name, $img_range, $category);
 			
 			# Add new range, but not if we're deleting
 			log_it("Adding range '$img_range [$category]' to album '$album_name'.");
