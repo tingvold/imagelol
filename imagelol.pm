@@ -11,6 +11,10 @@ my $imagelol_dir;
 BEGIN {
 	use FindBin;
 	$imagelol_dir = "$FindBin::Bin"; # Assume working-folder is the path where this script resides
+	if($imagelol_dir =~ m/www/){
+		# web-instance
+		$imagelol_dir = "/srv/bilder/imagelol";
+	}
 }
 use lib $imagelol_dir;
 
