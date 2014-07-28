@@ -46,26 +46,32 @@ sub zip_album{
 	# find all images in album
 	my %empty;
 	my $images = $imagelol->merge_image_ranges(\%empty, $album, $album->{name}, "foo", "bar");
-
-	foreach my $image (keys %$images){
-		my $filename = $images->{$image}{path_preview};
-		$filename =~ s/.+\/(.+)$/$1/; # get filename to use in zip
+	
+	if($images){
+		foreach my $image (keys %$images){
+			my $filename = $images->{$image}{path_preview};
+			$filename =~ s/.+\/(.+)$/$1/; # get filename to use in zip
 		
-		$zip->addFile($images->{$image}{path_preview}, $filename);
-	}
+			$zip->addFile($images->{$image}{path_preview}, $filename);
+		}
 
-	# set binmode
-	binmode STDOUT;
+		# set binmode
+		binmode STDOUT;
 	
-	# header
-	print "Content-type: application/octet-stream\n";
-	print "Content-Disposition: attachment; filename=\"$filename\"\n\n"; # need extra line after header
+		# header
+		print "Content-type: application/octet-stream\n";
+		print "Content-Disposition: attachment; filename=\"$filename\"\n\n"; # need extra line after header
 	
-	# flush stdout after the header
-	$|=1;
+		# flush stdout after the header
+		$|=1;
 	
-	# sendt to browser
-	$zip->writeToFileHandle( \*STDOUT, 0 );
+		# sendt to browser
+		$zip->writeToFileHandle( \*STDOUT, 0 );
+	} else {
+		# no images -- should not happen
+		# print error
+		not_found();
+	}
 }
 
 # print 404
@@ -86,21 +92,45 @@ $imagelol->connect();
 # fetch album name
 my $cgi = CGI->new();
 my $album_name = $cgi->param('n');
+my $album_id = $cgi->param('id');
 
 # Check if album exists
-my $album = $imagelol->get_album($album_name);
-if($album){
-	if($album->{enabled}){
-		# valid album + enabled
-		zip_album($album);
+if ($album_name){
+	# find by name
+	my $album = $imagelol->get_album($album_name);
+	if($album){
+		if($album->{enabled}){
+			# valid album + enabled
+			zip_album($album);
+		} else {
+			# album not enabled
+			# return 404 not found
+			not_found();
+		}
 	} else {
-		# album not enabled
+		# no album with that name
+		# return 404 not found
+		not_found();
+	}
+} elsif ($album_id){
+	# find by id
+	my $album = $imagelol->get_album_by_id($album_id);
+	if($album){
+		if($album->{enabled}){
+			# valid album + enabled
+			zip_album($album);
+		} else {
+			# album not enabled
+			# return 404 not found
+			not_found();
+		}
+	} else {
+		# no album with that name
 		# return 404 not found
 		not_found();
 	}
 } else {
-	# no album with that name
-	# return 404 not found
+	# neither provided
 	not_found();
 }
 
