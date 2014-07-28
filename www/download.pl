@@ -37,7 +37,7 @@ sub error_log{
 # ZIP an entire album on-the-fly
 sub zip_album{
 	my $album = shift;
-	(my $prettyname = lc($album->{name})) =~ s/[^a-zA-Z]+//g; # strip all but characters
+	(my $prettyname = lc($album->{name})) =~ s/[^a-zA-Z]+//g; # strip all but a-z
 	$prettyname = substr($prettyname, 0, 10); # limit filename to 10 chars
 	my $filename = "album-" . $prettyname . ".zip";
 	
@@ -65,8 +65,8 @@ sub zip_album{
 		# flush stdout after the header
 		$|=1;
 	
-		# sendt to browser
-		$zip->writeToFileHandle( \*STDOUT, 0 );
+		# send to browser
+		$zip->writeToFileHandle(\*STDOUT, 0);
 	} else {
 		# no images -- should not happen
 		# print error
@@ -125,7 +125,7 @@ if ($album_name){
 			not_found();
 		}
 	} else {
-		# no album with that name
+		# no album with that id
 		# return 404 not found
 		not_found();
 	}
