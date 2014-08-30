@@ -37,7 +37,7 @@ my %images_from_db;
 # Get options
 my (	$path_search, $img_range, $album_name, $album_description, $category,
 	$delete, $list, $generate, $empty_album, $parent_id, $disable_album, 
-	$enable_album, $list_all);
+	$enable_album, $list_all, $help);
 
 if (@ARGV > 0) {
 	GetOptions(
@@ -54,6 +54,7 @@ if (@ARGV > 0) {
 	'empty'			=> \$empty_album,	# make empty album
 	'disable'		=> \$disable_album,	# disable specified album
 	'enable'		=> \$enable_album,	# enable specified album
+	'help'			=> \$help,		# show help
 	)
 }
 
@@ -569,91 +570,114 @@ unless (flock(DATA, LOCK_EX|LOCK_NB)) {
 my $time_start = time();
 $imagelol->connect();
 
-# If we should list albums, or make symlinks, we do that here
-if($list || $generate){
-	if($list){
-		list_albums();
-	}
-	
-	if($generate){
-		generate_symlinks();
-	}
+if($help){
+	# print help
+	print qq(
+
+	s|search=s		# searches in the path_original table
+	r|range=s		# the range of images, separated by comma
+	a|album=s		# name of the album
+	d|desc|description=s	# description of album
+	c|cat|category=s	# define category -- use default if not defined
+	p|parent=s		# set a parent id for this album
+	delete			# disable all image ranges, or remove parent id
+	list|print		# list latest 10 albums
+	all			# list all albums
+	gen|generate|cron	# generate symlinks
+	empty			# make empty album
+	disable			# disable specified album
+	enable			# enable specified album
+	help			# show help
+
+);
+
 } else {
-	# Unless category defined, use default
-	unless($category){
-		$category = $config{div}->{default_category};
-	}
-
-	# If $img_range, needs to be valid
-	if($img_range){
-		unless($img_range =~ m/^$config{regex}->{img_range}$/){
-			exit error_log("Invalid image range.");
+	# If we should list albums, or make symlinks, we do that here
+	if($list || $generate){
+		if($list){
+			list_albums();
 		}
-	}
-
-	# If $album_name, needs to be valid
-	if($album_name){
-		unless($album_name =~ m/^$config{regex}->{album_name}$/){
-			exit error_log("Invalid album name.");
-		}
-	}
 	
-	# If $parent_id, needs to be valid + exist
-	if(defined($parent_id)){
-		if($parent_id =~ m/^$config{regex}->{parent_id}$/){
-			# check if album exists
-			unless($imagelol->album_exists($parent_id)){
-				# album doesn't exist
-				if($delete){
-					# don't warn if we are to delete parent id
-					if($empty_album){
-						# but warn if we try to create empty album at the same time
-						exit error_log("Can't add empty album when '-delete' parameter specified.");
-					}
-				} else {
-					exit error_log("Parent id doesn't exist.");
-				}
+		if($generate){
+			generate_symlinks();
+		}
+	} else {
+		# Unless category defined, use default
+		unless($category){
+			$category = $config{div}->{default_category};
+		}
+
+		# If $img_range, needs to be valid
+		if($img_range){
+			unless($img_range =~ m/^$config{regex}->{img_range}$/){
+				exit error_log("Invalid image range.");
 			}
-		} else {
-			exit error_log("Invalid parent id.");
 		}
-	}
-	
-	# If empty album is to be added
-	if($empty_album){
+
+		# If $album_name, needs to be valid
 		if($album_name){
-			# only do this if we actually have $album_name
-			add_empty_album();
+			unless($album_name =~ m/^$config{regex}->{album_name}$/){
+				exit error_log("Invalid album name.");
+			}
+		}
+	
+		# If $parent_id, needs to be valid + exist
+		if(defined($parent_id)){
+			if($parent_id =~ m/^$config{regex}->{parent_id}$/){
+				# check if album exists
+				unless($imagelol->album_exists($parent_id)){
+					# album doesn't exist
+					if($delete){
+						# don't warn if we are to delete parent id
+						if($empty_album){
+							# but warn if we try to create empty album at the same time
+							exit error_log("Can't add empty album when '-delete' parameter specified.");
+						}
+					} else {
+						exit error_log("Parent id doesn't exist.");
+					}
+				}
+			} else {
+				exit error_log("Invalid parent id.");
+			}
+		}
+	
+		# If empty album is to be added
+		if($empty_album){
+			if($album_name){
+				# only do this if we actually have $album_name
+				add_empty_album();
+				exit 1;
+			} else {			
+				exit error_log("Need to fill out all the required parameters.");
+			}
+		}
+
+		# Update album description only
+		if(($album_name && $album_description) && !$path_search && !$img_range && !$delete){
+			update_album_description();
 			exit 1;
-		} else {			
+		}
+	
+		# Update parent_id only
+		if(($album_name && defined($parent_id)) && !$path_search && !$img_range && !$album_description){
+			update_album_parent();
+			exit 1;
+		}
+	
+		# Set default search-path (current year + month)
+		unless($path_search){
+			$path_search = $imagelol->date_string_ym();
+		}
+
+		# Need at least these three if we are to do anything more
+		unless($path_search && $img_range && $album_name){
 			exit error_log("Need to fill out all the required parameters.");
 		}
-	}
 
-	# Update album description only
-	if(($album_name && $album_description) && !$path_search && !$img_range && !$delete){
-		update_album_description();
-		exit 1;
+		# At this point we should have a valid starting point
+		fix_album();
 	}
-	
-	# Update parent_id only
-	if(($album_name && defined($parent_id)) && !$path_search && !$img_range && !$album_description){
-		update_album_parent();
-		exit 1;
-	}
-	
-	# Set default search-path (current year + month)
-	unless($path_search){
-		$path_search = $imagelol->date_string_ym();
-	}
-
-	# Need at least these three if we are to do anything more
-	unless($path_search && $img_range && $album_name){
-		exit error_log("Need to fill out all the required parameters.");
-	}
-
-	# At this point we should have a valid starting point
-	fix_album();
 }
 
 $imagelol->disconnect();
