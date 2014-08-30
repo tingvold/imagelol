@@ -682,7 +682,7 @@ if($help){
 
 $imagelol->disconnect();
 
-unless($list || $generate){
+unless($list || $generate || $help){
 	# How long did we run
 	my $runtime = time() - $time_start;
 	log_it("Took $runtime seconds to complete.");
