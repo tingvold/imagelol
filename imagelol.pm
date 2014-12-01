@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/env perl
 use strict;
 use warnings;
 use DBI;
@@ -141,11 +141,9 @@ sub new{
 		
 	open $LOG_FILE, '>>', $logfile_name or die "Couldn't open $logfile_name: $!";
 	
-	# Fix permissions for the logfile
-	# If the file is created while running as root, the imagelol-user cannot access it
-	if (is_root()){
-		system_chown($logfile_name, $config{div}->{imagelol_uid}, $config{div}->{imagelol_gid}, 0);
-	}
+	# Fix owner for the logfile
+	# If the file is created while running as another user, the imagelol-user cannot access it
+	system_chown($logfile_name, $config{div}->{imagelol_uid}, $config{div}->{imagelol_gid}, 0);
 		
 	return bless $self, shift;
 }

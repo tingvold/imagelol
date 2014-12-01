@@ -1,7 +1,6 @@
-#!/usr/bin/perl	
+#!/usr/bin/env perl
 use strict;
 use warnings;
-use lib "/opt/local/lib/perl5/site_perl/5.12.4";
 use Getopt::Long;
 use File::Find;
 use File::Basename;
