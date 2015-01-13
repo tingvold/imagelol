@@ -140,11 +140,7 @@ sub new{
 	my $logfile_name = $config{path}->{log_folder} . "/" . $config{path}->{logfile_prefix} . "_" . date_string_ymd();
 		
 	open $LOG_FILE, '>>', $logfile_name or die "Couldn't open $logfile_name: $!";
-	
-	# Fix owner for the logfile
-	# If the file is created while running as another user, the imagelol-user cannot access it
-	system_chown($logfile_name, $config{div}->{imagelol_uid}, $config{div}->{imagelol_gid}, 0);
-		
+			
 	return bless $self, shift;
 }
 
