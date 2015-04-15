@@ -538,27 +538,6 @@ sub add_symlinks{
 	}
 }
 
-# ZIP an entire album on-the-fly
-sub zip_album{
-	my $path = "path/to/file/";
-	my $filename = "data.zip";
-	my $zip = Archive::Zip->new();
-	$zip->addTree( $path, '' );
-
-	# header
-	#Content-type: application/zip\n"
-	#"Content-Disposition: attachment; filename=\"$filename\"\n\n";
-
-	# set binmode
-	binmode STDOUT;
-	
-	# flush headers
-	$|=1;
-	
-	# sendt to browser
-	$zip->writeToFileHandle( \*STDOUT, 0 );
-}
-
 # We only want 1 instance of this script running
 # Check if already running -- if so, abort.
 unless (flock(DATA, LOCK_EX|LOCK_NB)) {
