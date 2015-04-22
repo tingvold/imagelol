@@ -10,7 +10,7 @@ use threads::shared;
 use Thread::Queue;
 
 # Don't allow this script to be interrupted
-local $SIG{'INT'} = 'IGNORE'; 
+$SIG{'INT'} = 'IGNORE'; 
 
 # Load imagelol
 my $imagelol_dir;
@@ -103,7 +103,7 @@ sub image_queue{
 # Process single image
 sub process_image{
 	# Don't allow this thread to be interrupted
-	local $SIG{'INT'} = 'IGNORE';
+	$SIG{'INT'} = 'IGNORE';
 	
 	my $image = shift;
 	
@@ -332,6 +332,9 @@ sub process_image{
 
 # Copy images
 sub process_images{
+	# Don't allow this thread to be interrupted
+	$SIG{'INT'} = 'IGNORE';
+	
 	while (my $image = $imageq->dequeue()){
 		last if ($image eq 'DONE');	# all done
 		
