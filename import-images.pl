@@ -102,6 +102,9 @@ sub image_queue{
 
 # Process single image
 sub process_image{
+	# Don't allow this thread to be interrupted
+	$SIG{'INT'} = 'IGNORE';
+	
 	my $image = shift;
 	
 	if (	$image->{filename} =~ m/^.+\.($config{div}->{image_filenames})$/i ||
