@@ -71,9 +71,6 @@ if (@ARGV > 0) {
 #########
 ## - List detailed info about specific album (i.e. all active image-ranges + all images + number of images)
 ## - Disable/enable album from CLI
-## - Download album as .zip-file?
-## 	- Make a .zip-file with unique URL, only available for X hours or X days, before it's deleted?
-##	- Password protect?
 ## - Make all images from /dates/ available as direct links ( '$URL/direct/md5sum_$imgname' or similar)
 ## 	- "Hidden" albums as well, using the same approach? ( '$URL/direct/album/md5sum_$album_name' or something)
 

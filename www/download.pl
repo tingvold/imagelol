@@ -90,30 +90,12 @@ $imagelol->connect();
 
 # fetch album name
 my $cgi = CGI->new();
-my $album_name = $cgi->param('n');
-my $album_id = $cgi->param('id');
+my $album_uuid = $cgi->param('uuid');
 
 # Check if album exists
-if ($album_name){
-	# find by name
-	my $album = $imagelol->get_album($album_name);
-	if($album){
-		if($album->{enabled}){
-			# valid album + enabled
-			zip_album($album);
-		} else {
-			# album not enabled
-			# return 404 not found
-			not_found();
-		}
-	} else {
-		# no album with that name
-		# return 404 not found
-		not_found();
-	}
-} elsif ($album_id){
-	# find by id
-	my $album = $imagelol->get_album_by_id($album_id);
+if ($album_uuid){
+	# find by uuid
+	my $album = $imagelol->get_album_by_uuid($album_uuid);
 	if($album){
 		if($album->{enabled}){
 			# valid album + enabled
