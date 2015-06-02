@@ -5,6 +5,15 @@ use Getopt::Long;
 use File::Find;
 use File::Basename;
 use Encode;
+#binmode STDOUT, ':encoding(UTF-8)'; # all output is UTF-8 encoded
+#binmode(STDOUT, ":utf8");
+#binmode(STDOUT, ":encoding(UTF-8)");
+#use utf8;
+#use utf8;
+#use open ':encoding(utf8)';
+#binmode(STDOUT, ":utf8");
+#binmode(STDIN, ":utf8");
+use utf8::all;
 
 # Load imagelol
 my $imagelol_dir;
@@ -403,6 +412,7 @@ sub generate_symlinks{
 	# Add images on filesystem to the hash
 	foreach my $symlink ($imagelol->system_find_symlinks($config{path}->{www_base})){
 		chomp($symlink);
+		$symlink = decode('utf8', $symlink);
 		$images_on_file{$symlink} = 1;
 	}
 	
