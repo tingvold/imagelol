@@ -5,6 +5,7 @@ use DBI;
 use POSIX qw(strftime);
 use Config::General;
 use Fcntl qw(:flock);
+binmode STDOUT, ':encoding(UTF-8)'; # all output is UTF-8 encoded
 
 # Define imagelol-dir, and add it to %INC
 my $imagelol_dir;
