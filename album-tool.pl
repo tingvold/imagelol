@@ -5,14 +5,6 @@ use Getopt::Long;
 use File::Find;
 use File::Basename;
 use Encode;
-#binmode STDOUT, ':encoding(UTF-8)'; # all output is UTF-8 encoded
-#binmode(STDOUT, ":utf8");
-#binmode(STDOUT, ":encoding(UTF-8)");
-#use utf8;
-#use utf8;
-#use open ':encoding(utf8)';
-#binmode(STDOUT, ":utf8");
-#binmode(STDIN, ":utf8");
 use utf8::all;
 
 # Load imagelol
