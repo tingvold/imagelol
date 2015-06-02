@@ -57,11 +57,11 @@ my $sql_statements = {
 
 					WHERE 	((LOWER(name)) = (LOWER(?)))
 				",
-	get_album_by_id =>	"	SELECT 	*
+	get_album_by_uuid =>	"	SELECT 	*
 
 					FROM 	albums
 
-					WHERE 	(albumid = ?)
+					WHERE 	(uuid = ?)
 				",
 	get_albums =>		"	SELECT 	*,
 						(
@@ -606,13 +606,13 @@ sub get_album{
 	return $albuminfo;
 }
 
-# fetch album info by id
-sub get_album_by_id{
+# fetch album info by uuid
+sub get_album_by_uuid{
 	my $self = shift;
-	my $albumid = shift;
+	my $album_uuid = shift;
 	
-	$self->{_sth} = $self->{_dbh}->prepare($sql_statements->{get_album_by_id});
-	$self->{_sth}->execute($albumid);
+	$self->{_sth} = $self->{_dbh}->prepare($sql_statements->{get_album_by_uuid});
+	$self->{_sth}->execute($album_uuid);
 	
 	my $albuminfo = $self->{_sth}->fetchrow_hashref();
 	$self->{_sth}->finish();
