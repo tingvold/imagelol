@@ -2,7 +2,7 @@
 use strict;
 use warnings;
 use Getopt::Long;
-use File::Find;
+use File::Find::utf8;
 use File::Basename;
 use Encode;
 use utf8::all;

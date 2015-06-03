@@ -24,8 +24,10 @@ package imagelol;
 my $config_file = "$imagelol_dir/imagelol.conf";
 my $conf = Config::General->new(
 	-ConfigFile => $config_file,
-	-InterPolateVars => 1);
+	-InterPolateVars => 1,
+	-UTF8 => 1);
 my %config = $conf->getall;
+
 
 # Internal switches
 my $silent_logging = $config{switch}->{silent_logging};
@@ -280,7 +282,7 @@ sub connect{
 						$config{db}->{password}, 
 						{
 							'RaiseError' => 0,
-							'AutoInactiveDestroy' => 1
+							'AutoInactiveDestroy' => 1,
 						}) 
 			or die log_it("imagelol", "Got error $DBI::errstr when connecting to database.");
 	} else {
