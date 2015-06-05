@@ -258,9 +258,9 @@ sub list_albums{
 	if((scalar keys %$albums) > 0){
 		# We have albums -- go through them one-by-one, sorted by date added
 		print("\n\n\n");
-		printf("%-20s %-40s %-40s %-10s %-35s %-10s %-10s\n", "albumid", "name", "description", "parent", "added", "enabled", "# of images");
+		printf("%-20s %-40s %-40s %-10s %-35s %-10s %-15s %-80s\n", "albumid", "name", "description", "parent", "added", "enabled", "# of images", "URL to download album");
 
-		my $n = 175;
+		my $n = 260;
 		print char_repeat($n, "-") . "\n";
 		
 		# only print last 10 albums by default
@@ -351,6 +351,8 @@ sub print_album_line{
 	
 	my $newalbumid = $level_string . $albumid;
 	
+	my $albumurl = $config{div}->{download_url} . $albums->{$albumid}->{uuid};
+	
 	# due to printf being sucky at unicode chars, we do it our own way
 	my $string = space_pad(21, $newalbumid);
 	$string .= space_pad(41, $albumname);
@@ -358,7 +360,8 @@ sub print_album_line{
 	$string .= space_pad(11, $parent);
 	$string .= space_pad(36, $albums->{$albumid}->{added});
 	$string .= space_pad(11, $albums->{$albumid}->{enabled});
-	$string .= space_pad(11, $albums->{$albumid}->{image_count});
+	$string .= space_pad(16, $albums->{$albumid}->{image_count});
+	$string .= space_pad(81, $albumurl);
 	print "$string\n";
 }
 

@@ -25,6 +25,7 @@
 	raw_image = cr2
 	default_category = 6D
 	strict_filename = 1
+	download_url = http://example.domain.com/dl/album.pl?uuid=
 </div>
 
 <regex>
