@@ -190,32 +190,6 @@ sub process_image{
 		$imagelol->copy_stuff($image->{org_src}, $image_dst_file)
 			or return error_log("Could not copy image '$image->{org_src}' to '$image_dst_file'.");
 
-		# If movie, we've done enough
-		if ($image->{filename} =~ m/^.+\.($config{div}->{movie_filenames})$/i){
-			if (-e $image->{org_src}){
-				# The file actually exists, lets delete it.
-				$imagelol->system_rm($image->{org_src})
-					or return error_log("Could not delete movie '$image->{org_src}'.");
-			}
-			return 1; # return gracefully -- this is not a fail
-		}
-
-		# Extract preview
-		# Save full version + resized version
-		my $jpg_from_raw;
-		if ($is_raw){
-			debug_log("Extracting preview from RAW file.");
-
-			# Exit if error
-			unless (defined($exif_tags->{'PreviewImage'})){
-				return error_log("No preview found.");
-			}
-
-			# Fetch JPG
-			$jpg_from_raw = $exif_tags->{'PreviewImage'};
-			$jpg_from_raw = $$jpg_from_raw if ref($jpg_from_raw);
-		}
-		
 		# Create dir
 		my $preview_dst_dir = $config{path}->{preview_folder} . "/" . $category . "/" . $year . "/" . $month . "/" . $day;
 
@@ -226,96 +200,124 @@ sub process_image{
 				or return error_log("Could not create directory image '$preview_dst_dir'.");
 		}
 
-		# Make filename of preview
-		# Here we try to fetch the info via EXIF-tags
-		# Then we try to use the filename of the original file
-		(my $jpg_filename = $image->{pretty_filename}) =~ s/\.[^.]+$//;
+		my $image_preview_filename;
 		
-		if($is_raw || $is_psd){
-			# These are converted to .jpg, so no more checks
-			$jpg_filename .= ".jpg";
+		if ($image->{filename} =~ m/^.+\.($config{div}->{movie_filenames})$/i){
+			# Movie, symlink to original movie
+
+			my $movie_dst = $preview_dst_dir . "/" . $image->{filename};
+			$image_preview_filename = $movie_dst;
+
+			$imagelol->system_ln($image_dst_file, $movie_dst);
 		} else {
-			# Other files
-			if (defined($exif_tags->{'FileType'})){
-				# we have a filetype -- let's use that
-				my $filetype = lc($exif_tags->{'FileType'});
-				$filetype = "jpg" if($filetype =~ m/jpeg/i);
-				$jpg_filename .= ".$filetype";
-			} else {
-				# no value -- assume .jpg
+			# Image, extract preview
+			# Save full version + resized version
+			my $jpg_from_raw;
+			if ($is_raw){
+				debug_log("Extracting preview from RAW file.");
+
+				# Exit if error
+				unless (defined($exif_tags->{'PreviewImage'})){
+					return error_log("No preview found.");
+				}
+
+				# Fetch JPG
+				$jpg_from_raw = $exif_tags->{'PreviewImage'};
+				$jpg_from_raw = $$jpg_from_raw if ref($jpg_from_raw);
+			}
+			
+			# Make filename of preview
+			# Here we try to fetch the info via EXIF-tags
+			# Then we try to use the filename of the original file
+			(my $jpg_filename = $image->{pretty_filename}) =~ s/\.[^.]+$//;
+			
+			if($is_raw || $is_psd){
+				# These are converted to .jpg, so no more checks
 				$jpg_filename .= ".jpg";
+			} else {
+				# Other files
+				if (defined($exif_tags->{'FileType'})){
+					# we have a filetype -- let's use that
+					my $filetype = lc($exif_tags->{'FileType'});
+					$filetype = "jpg" if($filetype =~ m/jpeg/i);
+					$jpg_filename .= ".$filetype";
+				} else {
+					# no value -- assume .jpg
+					$jpg_filename .= ".jpg";
+				}
+			}	
+				
+			my $jpg_dst = $preview_dst_dir . "/" . $jpg_filename;
+			$image_preview_filename = $jpg_dst;
+
+			# Copy preview
+			if ($is_raw){
+				# Extract preview from RAW file
+				my $JPG_FILE;
+				open(JPG_FILE,">$jpg_dst") or return error_log("Error creating '$jpg_dst'.");
+				binmode(JPG_FILE);
+				my $err;
+				print JPG_FILE $jpg_from_raw or $err = 1;
+				close(JPG_FILE) or $err = 1;
+				if ($err) {
+					unlink $jpg_dst; # remove the bad file
+					return error_log("Could not copy preview image '$jpg_dst'. Aborting.");
+				}
+			} elsif ($is_psd){
+				# PSD
+				$imagelol->convert_psd($image->{org_src}, $jpg_dst)
+					or return error_log("Could not convert PSD image '$image->{org_src}' to '$jpg_dst'.");
+			} else {
+				# Copy normally, as source is non-RAW
+				$imagelol->copy_stuff($image->{org_src}, $jpg_dst)
+					or return error_log("Could not copy image '$image->{org_src}' to '$jpg_dst'.");
 			}
-		}	
-			
-		my $jpg_dst = $preview_dst_dir . "/" . $jpg_filename;
 
-		# Copy preview
-		if ($is_raw){
-			# Extract preview from RAW file
-			my $JPG_FILE;
-			open(JPG_FILE,">$jpg_dst") or return error_log("Error creating '$jpg_dst'.");
-			binmode(JPG_FILE);
-			my $err;
-			print JPG_FILE $jpg_from_raw or $err = 1;
-			close(JPG_FILE) or $err = 1;
-			if ($err) {
-				unlink $jpg_dst; # remove the bad file
-				return error_log("Could not copy preview image '$jpg_dst'. Aborting.");
+			# Copy EXIF-data from source, into preview
+			$imagelol->copy_exif($image->{org_src}, $jpg_dst)
+				or return error_log("Could not copy EXIF data from '$image->{org_src}' to '$jpg_dst'.");
+				
+			# Copy timestamp from source, into preview
+			# This is used by gallery if no EXIF-data exists
+			$imagelol->copy_timestamp($image->{org_src}, $jpg_dst)
+				or return error_log("Could not copy timestamp from '$image->{org_src}' to '$jpg_dst'.");
+
+			# Rotate full preview (if needed)
+			# http://sylvana.net/jpegcrop/exif_orientation.html
+			# http://www.impulseadventure.com/photo/exif-orientation.html
+			# We do rotation unless 'orientation == 1'	
+			my $rotate = 1;
+			if (defined($exif_tags->{'Orientation'})){
+				$rotate = 0 if ($exif_tags->{'Orientation'} == 1);
 			}
-		} elsif ($is_psd){
-			# PSD
-			$imagelol->convert_psd($image->{org_src}, $jpg_dst)
-				or return error_log("Could not convert PSD image '$image->{org_src}' to '$jpg_dst'.");
-		} else {
-			# Copy normally, as source is non-RAW
-			$imagelol->copy_stuff($image->{org_src}, $jpg_dst)
-				or return error_log("Could not copy image '$image->{org_src}' to '$jpg_dst'.");
+			if($rotate){
+				$imagelol->rotate_image($jpg_dst, $jpg_dst)
+					or return error_log("Could not rotate image '$jpg_dst'.");
+			}
 		}
 
-		# Copy EXIF-data from source, into preview
-		$imagelol->copy_exif($image->{org_src}, $jpg_dst)
-			or return error_log("Could not copy EXIF data from '$image->{org_src}' to '$jpg_dst'.");
-			
-		# Copy timestamp from source, into preview
-		# This is used by gallery if no EXIF-data exists
-		$imagelol->copy_timestamp($image->{org_src}, $jpg_dst)
-			or return error_log("Could not copy timestamp from '$image->{org_src}' to '$jpg_dst'.");
-
-		# Rotate full preview (if needed)
-		# http://sylvana.net/jpegcrop/exif_orientation.html
-		# http://www.impulseadventure.com/photo/exif-orientation.html
-		# We do rotation unless 'orientation == 1'	
-		my $rotate = 1;
-		if (defined($exif_tags->{'Orientation'})){
-			$rotate = 0 if ($exif_tags->{'Orientation'} == 1);
-		}
-		if($rotate){
-			$imagelol->rotate_image($jpg_dst, $jpg_dst)
-				or return error_log("Could not rotate image '$jpg_dst'.");
-		}
-		
-		# If strict filename is in place, we don't want to add it to the DB
+		# If filename doesn't match, we don't want to add it to the DB
 		# We've done all of the above, so that we still have the image in the archive
 		# but since it will break the logic of the DB, we won't add it there
-		if ($config{div}->{strict_filename}){
-			unless($image->{filename} =~ m/^$config{regex}->{strict_filename}/i && 
-				$image->{filename} =~ m/^.+\.($config{div}->{image_filenames})$/i){
-				if (-e $image->{org_src}){
-					# The file actually exists, lets delete it.
-					$imagelol->system_rm($image->{org_src})
-						or return error_log("Could not delete import image '$image->{org_src}'.");
-				}
-				log_it("Strict filenames enabled. Image '$image->{filename}' does not conform with this -- not adding to DB.");
-				return 1; # return gracefullly -- this is not a fail
+		unless(	$image->{filename} =~ m/^$config{regex}->{image_name}/i && (
+			$image->{filename} =~ m/^.+\.($config{div}->{image_filenames})$/i ||
+			$image->{filename} =~ m/^.+\.($config{div}->{movie_filenames})$/i)){
+
+			if (-e $image->{org_src}){
+				# The file actually exists, lets delete it.
+				$imagelol->system_rm($image->{org_src})
+					or return error_log("Could not delete import image '$image->{org_src}'.");
 			}
+			log_it("Strict filenames are used. Image '$image->{filename}' does not conform with this -- not adding to DB.");
+			return 1; # return gracefullly -- this is not a fail
 		}
 		
 		# Add to image hash, so we can add to DB later on
-		(my $imagenumber = $image->{pretty_filename}) =~ s/^$config{regex}->{imagenumber}$/$2/i;
+		(my $imagenumber = $image->{pretty_filename}) =~ s/^$config{regex}->{image_name}.+$/$2/i;
 		my %image_info : shared = (
 			image_file => $image->{pretty_filename},
 			original_file => $image_dst_file,
-			preview_file => $jpg_dst,
+			preview_file => $image_preview_filename,
 			import_file => $image->{org_src},
 			full_date => $full_date,
 			category => $category,
