@@ -65,6 +65,12 @@ my $sql_statements = {
 
 					WHERE 	(uuid = ?)
 				",
+	get_album_by_id =>	"	SELECT 	*
+
+					FROM 	albums
+
+					WHERE 	(albumid = ?)
+				",
 	get_albums =>		"	SELECT 	*,
 						(
 							SELECT 	COUNT (*)
@@ -622,6 +628,20 @@ sub get_album_by_uuid{
 	return $albuminfo;
 } 
 
+# fetch album info by id
+sub get_album_by_id{
+	my $self = shift;
+	my $album_id = shift;
+	
+	$self->{_sth} = $self->{_dbh}->prepare($sql_statements->{get_album_by_id});
+	$self->{_sth}->execute($album_id);
+	
+	my $albuminfo = $self->{_sth}->fetchrow_hashref();
+	$self->{_sth}->finish();
+	
+	return $albuminfo;
+} 
+
 # Get all albums
 sub get_albums{
 	my $self = shift;
@@ -656,14 +676,6 @@ sub set_imagenumber{
 	$self->{_sth} = $self->{_dbh}->prepare($sql_statements->{set_imagenumber});
 	$self->{_sth}->execute($imagenumber, $imageid);
 	$self->{_sth}->finish();
-	
-	# my $images = $imagelol->get_images();
-	# 
-	# foreach my $image ( sort keys %$images ){
-	# 	(my $imagenumber = $images->{$image}->{imagename}) =~ s/^IMG_([0-9]+)\.CR2$/$1/;
-	# 	print "Setting imagenumber ($images->{$image}->{imagename} -> $imagenumber)\n";
-	# 	$imagelol->set_imagenumber($image, $imagenumber);
-	# }
 }
 
 # Disable all album ranges

@@ -37,19 +37,21 @@ my %images_from_db;
 # Get options
 my (	$path_search, $img_range, $album_name, $album_description, $category,
 	$delete, $list, $generate, $empty_album, $parent_id, $disable_album, 
-	$enable_album, $list_all, $help);
+	$enable_album, $list_all, $help, $list_uuid, $aid);
 
 if (@ARGV > 0) {
 	GetOptions(
 	's|search=s'		=> \$path_search,	# searches in the path_original table
 	'r|range=s'		=> \$img_range,		# the range of images, separated by comma
 	'a|album=s'		=> \$album_name,	# name of the album
+	'aid=s'			=> \$aid,		# use albumid to edit albums
 	'd|desc|description=s'	=> \$album_description,	# description of album
 	'c|cat|category=s'	=> \$category,		# define category -- use default if not defined
 	'p|parent=s'		=> \$parent_id,		# set a parent id for this album
 	'delete'		=> \$delete,		# disable all image ranges, or remove parent id
 	'list|print'		=> \$list,		# list latest 10 albums
 	'all'			=> \$list_all,		# list all albums
+	'uuid'			=> \$list_uuid,		# list UUID-download-link
 	'gen|generate|cron'	=> \$generate,		# generate symlinks
 	'empty'			=> \$empty_album,	# make empty album
 	'disable'		=> \$disable_album,	# disable specified album
@@ -84,20 +86,20 @@ sub fix_album{
 			# We disable all previous ranges, and update with current images
 			$imagelol->disable_album_ranges($album->{albumid});
 			log_it("Since deletion was used, all previous ranges for album '$album_name' has now been disabled.");
-		} else {
-			# Do this for each enabled range for this album
-			$images = $imagelol->merge_image_ranges($images, $album, $album_name, $img_range, $category);
-			
-			# Add new range, but not if we're deleting
-			log_it("Adding range '$img_range [$category]' to album '$album_name'.");
-			$imagelol->add_album_range($album->{albumid}, $img_range, $path_search, $category);
-			
-			# Warn if no images found
-			unless((scalar keys %$images) > 0){
-				error_log("No images found for the range '$img_range' with search '$path_search'.");
-			}
 		}
+
+		# Do this for each enabled range for this album
+		$images = $imagelol->merge_image_ranges($images, $album, $album_name, $img_range, $category);
 			
+		# Add new range
+		log_it("Adding range '$img_range [$category]' to album '$album_name'.");
+		$imagelol->add_album_range($album->{albumid}, $img_range, $path_search, $category);
+			
+		# Warn if no images found
+		unless((scalar keys %$images) > 0){
+			error_log("No images found for the range '$img_range' with search '$path_search'.");
+		}
+					
 		# We add entries that isn't present from before
 		# We remove entries that are no longer present
 		add_delete_albumentries($images, $album->{albumid});
@@ -129,11 +131,9 @@ sub add_delete_albumentries{
 	}
 	
 	# Lets delete images still left in $album_images
-	log_it("Deleting images from album '$album_name'.");
 	delete_images($album_images, $albumid);
 	
 	# Lets add images still left in $new_images
-	log_it("Adding images to album '$album_name'.");
 	add_images($new_images, $albumid);
 }
 
@@ -178,7 +178,6 @@ sub add_new_album{
 		$imagelol->add_album_range($albumid, $img_range, $path_search, $category);
 
 		# Add all images in $img_range to that album
-		log_it("Adding images to album '$album_name'.");
 		add_images($images, $albumid);
 	}
 }
@@ -258,9 +257,15 @@ sub list_albums{
 	if((scalar keys %$albums) > 0){
 		# We have albums -- go through them one-by-one, sorted by date added
 		print("\n\n\n");
-		printf("%-20s %-40s %-40s %-10s %-35s %-10s %-15s %-80s\n", "albumid", "name", "description", "parent", "added", "enabled", "# of images", "URL to download album");
 
-		my $n = 260;
+		if($list_uuid){
+			printf("%-20s %-40s %-40s %-10s %-35s %-10s %-15s %-80s\n", "albumid", "name", "description", "parent", "added", "enabled", "# of images", "URL to download album");
+		} else {
+			printf("%-20s %-40s %-40s %-10s %-35s %-10s %-15s\n", "albumid", "name", "description", "parent", "added", "enabled", "# of images");
+		}
+
+		my $n = 180;
+		$n = 260 if $list_uuid;
 		print char_repeat($n, "-") . "\n";
 		
 		# only print last 10 albums by default
@@ -361,7 +366,7 @@ sub print_album_line{
 	$string .= space_pad(36, $albums->{$albumid}->{added});
 	$string .= space_pad(11, $albums->{$albumid}->{enabled});
 	$string .= space_pad(16, $albums->{$albumid}->{image_count});
-	$string .= space_pad(81, $albumurl);
+	$string .= space_pad(81, $albumurl) if $list_uuid;
 	print "$string\n";
 }
 
@@ -469,6 +474,9 @@ sub get_album_images{
 	my $album_images = $imagelol->get_album_images($albumid);
 
 	foreach my $imageid ( keys %$album_images ){
+		# don't add disabled images
+		next unless($album_images->{$imageid}->{enabled});
+
 		# alter image src, so that it fits our www-scheme
 		my $image_src = $album_images->{$imageid}->{path_preview};
 		$image_src =~ s/^$config{path}->{preview_folder}//i; # remove the original prefix
@@ -557,17 +565,20 @@ if($help){
 	s|search=s		# searches in the path_original table
 	r|range=s		# the range of images, separated by comma
 	a|album=s		# name of the album
+	aid=s			# use albumid to edit albums
 	d|desc|description=s	# description of album
 	c|cat|category=s	# define category -- use default if not defined
 	p|parent=s		# set a parent id for this album
 	delete			# disable all image ranges, or remove parent id
 	list|print		# list latest 10 albums
 	all			# list all albums
+	uuid 			# list UUID-download-link
 	gen|generate|cron	# generate symlinks
 	empty			# make empty album
 	disable			# disable specified album
 	enable			# enable specified album
 	help			# show help
+
 
 );
 
@@ -630,6 +641,21 @@ if($help){
 				exit 1;
 			} else {			
 				exit error_log("Need to fill out all the required parameters.");
+			}
+		}
+
+		# Set $album_name based on albumid (useful when editing albums)
+		if($aid){
+			if($aid =~ /^\d+$/){
+				my $albuminfo = $imagelol->get_album_by_id($aid);
+
+				if($albuminfo){
+					$album_name = $albuminfo->{name};
+				} else {
+					exit error_log("No album with that albumid.");
+				}
+			} else {
+				exit error_log("Invalid albumid.");
 			}
 		}
 
