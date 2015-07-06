@@ -63,7 +63,6 @@ if (@ARGV > 0) {
 #########
 ######### TODO
 #########
-## - List detailed info about specific album (i.e. all active image-ranges + all images + number of images)
 ## - Disable/enable album from CLI
 ## - Make all images from /dates/ available as direct links ( '$URL/direct/md5sum_$imgname' or similar)
 ## 	- "Hidden" albums as well, using the same approach? ( '$URL/direct/album/md5sum_$album_name' or something)
