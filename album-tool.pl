@@ -151,7 +151,7 @@ sub delete_images{
 # Add images to album
 sub add_images{
 	my ($images, $albumid) = @_;
-	
+		
 	foreach my $imageid ( keys %$images ){
 		# Add image $imageid to album $albumid
 		$imagelol->add_album_image($imageid, $albumid);
@@ -176,7 +176,7 @@ sub add_new_album{
 		# Add image range
 		log_it("Adding range '$img_range' to album '$album_name'.");
 		$imagelol->add_album_range($albumid, $img_range, $path_search, $category);
-
+		
 		# Add all images in $img_range to that album
 		add_images($images, $albumid);
 	}
@@ -472,7 +472,11 @@ sub get_album_images{
 
 	# find album images
 	my $album_images = $imagelol->get_album_images($albumid);
-
+	
+	# Fix duplicate images here
+	# We add a suffix for all duplicate images per album
+	$album_images = fix_duplicate_image_names($album_images, $albumid);
+		
 	foreach my $imageid ( keys %$album_images ){
 		# don't add disabled images
 		next unless($album_images->{$imageid}->{enabled});
@@ -487,8 +491,18 @@ sub get_album_images{
 		$image_dst_path .= "/" . $album_path; # album path
 
 		# image name
-		my $image_name = basename($album_images->{$imageid}->{path_preview}); # get only filename
-
+		my ($image_name, $foo_path, $ext) = fileparse($album_images->{$imageid}->{path_preview}, '\..*');
+		
+		# handle duplicate images by using suffix
+		if($album_images->{$imageid}->{suffix} > 1){
+			# duplicate image, handle it!
+			$image_name = $image_name . "_" . $album_images->{$imageid}->{suffix} . $ext;
+		} else {
+			# not a duplicate image, or duplicate image #1
+			# in either of these cases, we keep the original image name
+			$image_name = $image_name . $ext;
+		}
+		
 		# full path
 		my $image_dst = $image_dst_path . "/" . $image_name;
 
@@ -501,6 +515,49 @@ sub get_album_images{
 		# add to hash
 		$images_from_db{$albumid}{images}{$image_dst} = \%image;				
 	}
+}
+
+# Fix duplicate image names
+sub fix_duplicate_image_names{
+	my ($album_images, $albumid) = @_;
+	
+	# We need to find all duplicate image names, and handle these specially
+	# This is done to avoid duplicate image names in albums
+		
+	my %dup_images;
+	
+	foreach my $imageid ( keys %$album_images ){
+		my $image_name = fileparse($album_images->{$imageid}->{path_preview}); # get only filename
+		
+		push(@{$dup_images{$image_name}}, $album_images->{$imageid});
+	}
+	
+	foreach my $dup_image ( keys %dup_images ){
+		my $dup_count = scalar(@{$dup_images{$dup_image}});
+		unless($dup_count > 1){
+			# we're only interested if we have more than 1 picture
+			next;
+		}
+		
+		# at this point we have duplicate images
+		# we need to figure out if any of these already has a suffix
+		# if not, we need to add one
+		my @images = sort { $b->{suffix} <=> $a->{suffix} } @{$dup_images{$dup_image}};
+		my $max_suffix = $images[0]->{suffix}; # get the highest suffix value
+		$max_suffix = 0 unless(defined($max_suffix)); # set to 0 if no images has a suffix
+		
+		foreach my $image (@{$dup_images{$dup_image}}){
+			next unless($image->{suffix} == 0); # already has a suffix defined
+			
+			$max_suffix++; # we increment by one
+			
+			debug_log("Setting suffix to '$max_suffix' for image '$image->{imageid}' in album '$albumid'.");
+			$album_images->{$image->{imageid}}->{suffix} = $max_suffix;
+			$imagelol->set_album_image_suffix($albumid, $image->{imageid}, $max_suffix);
+		}
+	}
+	
+	return $album_images;
 }
 
 # Delete all symlinks from filesystem
@@ -521,7 +578,6 @@ sub add_symlinks{
 	my $files = shift;
 	
 	foreach my $albumid ( keys %$files ){
-		# compare each image
 		foreach my $albumimage ( keys %{$files->{$albumid}{images}} ){
 			my $dst_dir = $files->{$albumid}{images}{$albumimage}{image_dst_path};
 			my $file_src = $files->{$albumid}{images}{$albumimage}{image_src};
@@ -542,8 +598,6 @@ sub add_symlinks{
 				debug_log("Creating symlink from  '$file_src' to '$albumimage'.");
 				$imagelol->system_ln($file_src, $albumimage);
 			}
-
-			
 		}
 	}
 }

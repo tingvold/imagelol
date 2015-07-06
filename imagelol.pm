@@ -139,6 +139,13 @@ my $sql_statements = {
 
 					WHERE	(albumid = ?)
 				",
+	set_album_image_suffix => "	UPDATE 	album_images
+
+					SET 	suffix = ?
+
+					WHERE 	(albumid = ?)
+						AND (imageid = ?)
+				",			
 };
 
 # Create class
@@ -794,7 +801,15 @@ sub set_album_parent{
 	$self->{_sth}->finish();
 }
 
-
+# Set album image suffix
+sub set_album_image_suffix{
+	my $self = shift;
+	my ($albumid, $imageid, $max_suffix) = @_;
+	
+	$self->{_sth} = $self->{_dbh}->prepare($sql_statements->{set_album_image_suffix});
+	$self->{_sth}->execute($max_suffix, $albumid, $imageid);
+	$self->{_sth}->finish();
+}
 
 
 1;
