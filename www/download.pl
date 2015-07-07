@@ -44,12 +44,22 @@ sub zip_album{
 
 	# find all images in album
 	my %empty;
-	my $images = $imagelol->merge_image_ranges(\%empty, $album, $album->{name}, "foo", "bar");
+	my $images = $imagelol->get_album_images($album->{albumid});
 	
 	if($images){
 		foreach my $image (keys %$images){
-			my $filename = $images->{$image}{path_preview};
-			$filename =~ s/.+\/(.+)$/$1/; # get filename to use in zip
+			# image name
+			my ($filename, $foo_path, $ext) = fileparse($images->{$image}{path_preview}, '\..*');
+		
+			# handle duplicate images by using suffix
+			if($images->{$image}{suffix} > 1){
+				# duplicate image, handle it!
+				$filename = $filename . "_" . $images->{$image}{suffix} . $ext;
+			} else {
+				# not a duplicate image, or duplicate image #1
+				# in either of these cases, we keep the original image name
+				$filename = $filename . $ext;
+			}
 		
 			$zip->addFile($images->{$image}{path_preview}, $filename);
 		}
