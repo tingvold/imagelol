@@ -42,8 +42,7 @@ sub zip_album{
 	
 	my $zip = Archive::Zip->new();
 
-	# find all images in album
-	my %empty;
+	# get all images in album
 	my $images = $imagelol->get_album_images($album->{albumid});
 	
 	if($images){
