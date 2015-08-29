@@ -549,7 +549,7 @@ sub fix_duplicate_image_names{
 		# to get a new name. by sorting the array we assume that the oldest image
 		# is handled first (i.e. the image with the lowest imageid), hence get 
 		# 'suffix = 1', and in turn keep it's name.
-		foreach my $image ( sort @{$dup_images{$dup_image}} ){
+		foreach my $image ( sort { $a->{imageid} <=> $b->{imageid} } @{$dup_images{$dup_image}} ){
 			next unless($image->{suffix} == 0); # already has a suffix defined
 			
 			$max_suffix++; # we increment by one
