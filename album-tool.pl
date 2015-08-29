@@ -545,7 +545,11 @@ sub fix_duplicate_image_names{
 		my $max_suffix = $images[0]->{suffix}; # get the highest suffix value
 		$max_suffix = 0 unless(defined($max_suffix)); # set to 0 if no images has a suffix
 		
-		foreach my $image (@{$dup_images{$dup_image}}){
+		# since older imageid's already has been generated, we don't want them
+		# to get a new name. by sorting the array we assume that the oldest image
+		# is handled first (i.e. the image with the lowest imageid), hence get 
+		# 'suffix = 1', and in turn keep it's name.
+		foreach my $image ( sort @{$dup_images{$dup_image}} ){
 			next unless($image->{suffix} == 0); # already has a suffix defined
 			
 			$max_suffix++; # we increment by one
