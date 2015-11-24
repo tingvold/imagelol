@@ -153,9 +153,24 @@ sub new{
 	my $self = {};
 		
 	my $logfile_name = $config{path}->{log_folder} . "/" . $config{path}->{logfile_prefix} . "_" . date_string_ymd();
-		
+
+	# Store state before file is created on a new day
+	my $logfile_exists = 0;
+	if (-e "$logfile_name"){
+		$logfile_exists = 1;
+	}
+
 	open $LOG_FILE, '>>', $logfile_name or die "Couldn't open $logfile_name: $!";
-			
+
+	# TODO: still not a proper fix
+	# Should work as long as setuid/setgid is set on the folder
+	# (so that the correct group is set as owner)
+	unless ($logfile_exists){
+		# file did not exist before
+		# set proper permission so that other can change it too
+		system_chmod($logfile_name, "g+w", 0);
+	}
+				
 	return bless $self, shift;
 }
 
