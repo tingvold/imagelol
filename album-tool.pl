@@ -81,12 +81,6 @@ sub fix_album{
 		# However, if we want to delete (i.e. overwrite) the current images in an
 		# album with a new range, we can use this
 
-		if($delete){
-			# We disable all previous ranges, and update with current images
-			$imagelol->disable_album_ranges($album->{albumid});
-			log_it("Since deletion was used, all previous ranges for album '$album_name' has now been disabled.");
-		}
-
 		# Do this for each enabled range for this album
 		$images = $imagelol->merge_image_ranges($images, $album, $album_name, $img_range, $category);
 			
@@ -258,9 +252,24 @@ sub list_albums{
 		print("\n\n\n");
 
 		if($list_uuid){
-			printf("%-20s %-40s %-40s %-10s %-35s %-10s %-15s %-80s\n", "albumid", "name", "description", "parent", "added", "enabled", "# of images", "URL to download album");
+			printf("%-20s %-40s %-40s %-10s %-35s %-10s %-15s %-80s\n",
+				"albumid",
+				"name",
+				"description",
+				"parent",
+				"added",
+				"enabled",
+				"# of images",
+				"URL to download album");
 		} else {
-			printf("%-20s %-40s %-40s %-10s %-35s %-10s %-15s\n", "albumid", "name", "description", "parent", "added", "enabled", "# of images");
+			printf("%-20s %-40s %-40s %-10s %-35s %-10s %-15s\n",
+				"albumid",
+				"name",
+				"description",
+				"parent",
+				"added",
+				"enabled",
+				"# of images");
 		}
 
 		my $n = 180;
@@ -726,6 +735,25 @@ if($help){
 		if(($album_name && defined($parent_id)) && !$path_search && !$img_range && !$album_description){
 			update_album_parent();
 			exit 1;
+		}
+		
+		# Only delete image-ranges
+		if(($album_name && $delete) && !$path_search && !$img_range && !$album_description){
+			my $album = $imagelol->get_album($album_name);
+			if($album){
+				# We disable all previous ranges, and update with current images
+				$imagelol->disable_album_ranges($album->{albumid});
+				log_it("All previous ranges for album '$album_name' has now been disabled.");
+				exit 1;
+			} else {
+				# Not a valid album
+				exit error_log("Album doesn't exist. Try again.");
+			}
+		}
+		
+		# At this point, we don't need $delete anymore
+		if($delete){
+			exit error_log("Can't use -delete in this combination.");
 		}
 	
 		# Set default search-path (current year + month)
