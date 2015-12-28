@@ -28,7 +28,7 @@
 </div>
 
 <regex>
-	image_name = (IMG\\_|\\_MG\\_|DSCN|DSC|DSCF|JHT\\_|MVI\\_)([0-9]+)
+	image_name = (IMG|\\_MG|DSCN|DSC|DSCF|JHT|MVI)(\\_)?([0-9]+)
 	album_name = [æøåÆØÅa-zA-Z0-9\\ \\.\\,\\:\\+\\-\\_\\&\\(\\)\\[\\]]+
 	img_range = ([0-9]+|([0-9]+(\\,|\\-){1}[0-9]+)){1}([0-9]+|([0-9]+(\\,|\\-){1}[0-9]+))*
 	parent_id = [0-9]+
