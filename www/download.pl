@@ -36,9 +36,15 @@ sub error_log{
 # ZIP an entire album on-the-fly
 sub zip_album{
 	my $album = shift;
-	(my $prettyname = lc($album->{name})) =~ s/[^a-zA-Z]+//g; # strip all but a-z
-	$prettyname = substr($prettyname, 0, 10); # limit filename to 10 chars
-	my $filename = "album-" . $prettyname . ".zip";
+	(my $prettyname = lc($album->{name})) =~ s/[^a-zA-Z]+//g;	# strip all but a-z
+	$prettyname = substr($prettyname, 0, 15); 			# limit filename to 15 chars
+	(my $year = lc($album->{name})) =~ s/^.+([0-9]{4}).*$/$1/; 	# find year, if possible
+	if($year){
+		$year = "-$year";
+	} else {
+		$year = "";
+	}
+	my $filename = "album-" . $prettyname . $year . ".zip";
 	
 	my $zip = Archive::Zip->new();
 
