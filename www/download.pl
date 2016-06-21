@@ -35,7 +35,15 @@ sub error_log{
 
 # ZIP an entire album on-the-fly
 sub zip_album{
-	my $album = shift;
+	my ($raw, $album) = @_;
+	
+	# enable downloading of RAW images
+	my $album_type = 'jpeg';
+	$album_type = 'raw' if $raw;
+	my $image_path = 'path_preview';
+	$image_path = 'path_original' if $raw;
+	
+	# pretty album name
 	(my $prettyname = lc($album->{name})) =~ s/[^a-zA-Z]+//g;	# strip all but a-z
 	$prettyname = substr($prettyname, 0, 15); 			# limit filename to 15 chars
 	(my $year = lc($album->{name})) =~ s/^.+([0-9]{4}).*$/$1/; 	# find year, if possible
@@ -44,7 +52,7 @@ sub zip_album{
 	} else {
 		$year = "";
 	}
-	my $filename = "album-" . $prettyname . $year . ".zip";
+	my $filename = "album-$album_type-" . $prettyname . $year . ".zip";
 	
 	my $zip = Archive::Zip->new();
 
@@ -54,8 +62,8 @@ sub zip_album{
 	if($images){
 		foreach my $image (keys %$images){
 			# image name
-			my ($filename, $foo_path, $ext) = fileparse($images->{$image}{path_preview}, '\..*');
-		
+			my ($filename, $foo_path, $ext) = fileparse($images->{$image}{$image_path}, '\..*');
+					
 			# handle duplicate images by using suffix
 			if($images->{$image}{suffix} > 1){
 				# duplicate image, handle it!
@@ -65,8 +73,8 @@ sub zip_album{
 				# in either of these cases, we keep the original image name
 				$filename = $filename . $ext;
 			}
-		
-			$zip->addFile($images->{$image}{path_preview}, $filename);
+			
+			$zip->addFile($images->{$image}{$image_path}, $filename);
 		}
 
 		# set binmode
@@ -106,6 +114,7 @@ $imagelol->connect();
 # fetch album name
 my $cgi = CGI->new();
 my $album_uuid = $cgi->param('uuid');
+my $raw = $cgi->param('raw');
 
 # Check if album exists
 if ($album_uuid){
@@ -114,7 +123,7 @@ if ($album_uuid){
 	if($album){
 		if($album->{enabled}){
 			# valid album + enabled
-			zip_album($album);
+			zip_album($raw, $album);
 		} else {
 			# album not enabled
 			# return 404 not found
