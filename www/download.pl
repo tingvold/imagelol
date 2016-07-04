@@ -121,14 +121,10 @@ if ($album_uuid){
 	# find by uuid
 	my $album = $imagelol->get_album_by_uuid($album_uuid);
 	if($album){
-		if($album->{enabled}){
-			# valid album + enabled
-			zip_album($raw, $album);
-		} else {
-			# album not enabled
-			# return 404 not found
-			not_found();
-		}
+		# we assume that people with the download URL should have
+		# access, so we don't check if album is enabled
+		# to "disable" a download URL, generate a new UUID for that album
+		zip_album($raw, $album);
 	} else {
 		# no album with that id
 		# return 404 not found
