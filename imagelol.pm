@@ -104,6 +104,7 @@ my $sql_statements = {
 						INNER JOIN album_images ai ON i.imageid = ai.imageid
 					
 					WHERE	(ai.albumid = ?)
+						AND (i.enabled = true)
 				",
 				
 	delete_album_image =>	"	DELETE 	FROM album_images
