@@ -42,7 +42,7 @@ sub error_log{
 }
 
 # Get options
-my ($src_dir, $dst_dir, $category, $desc, $force_copy, $date_override);
+my ($src_dir, $dst_dir, $category, $desc, $force_copy, $date_override, $help);
 if (@ARGV > 0) {
 	GetOptions(
 	's|src|source=s'	=> \$src_dir,		# the source of the images to be imported
@@ -50,6 +50,7 @@ if (@ARGV > 0) {
 	'd|desc|description=s'	=> \$desc,		# add comment/description to imported images
 	'f|force'		=> \$force_copy,	# force copy/update, even if destination exist
 	'date=s'		=> \$date_override,	# override date of files being added
+	'help'			=> \$help,		# show help
 	)
 }
 
@@ -392,30 +393,46 @@ unless (flock(DATA, LOCK_EX|LOCK_NB)) {
 	die error_log("$0 is already running. Exiting.");
 }
 
-# Let's start...
-my $time_start = time();
-$imagelol->connect();
+if($help){
+	# print help
+	print qq(
 
-# Find all images, add to queue
-find_images();
+	s|src|source=s		# the source of the images to be imported
+	c|cat|category=s	# category to put the images in
+	d|desc|description=s	# add comment/description to imported images
+	f|force			# force copy/update, even if destination exist
+	date=s			# override date of files being added
+	help			# show help
 
-# Let the threads know when they're done
-$imageq->enqueue("DONE") for (1..$max_threads);
 
-# Start processing the queue
-threads->create("process_images") for (1..$max_threads);
+);
 
-# Wait till all threads is done
-sleep 5 while (threads->list(threads::running));
+} else {
+	# Let's start...
+	my $time_start = time();
+	$imagelol->connect();
 
-# Add images to database
-db_add_images();
+	# Find all images, add to queue
+	find_images();
 
-$imagelol->disconnect();
+	# Let the threads know when they're done
+	$imageq->enqueue("DONE") for (1..$max_threads);
 
-# How long did we run
-my $runtime = time() - $time_start;
-log_it("Took $runtime seconds to complete.");
+	# Start processing the queue
+	threads->create("process_images") for (1..$max_threads);
+
+	# Wait till all threads is done
+	sleep 5 while (threads->list(threads::running));
+
+	# Add images to database
+	db_add_images();
+
+	$imagelol->disconnect();
+
+	# How long did we run
+	my $runtime = time() - $time_start;
+	log_it("Took $runtime seconds to complete.");
+}
 
 __DATA__
 Do not remove. Makes sure flock() code above works as it should.
