@@ -20,7 +20,7 @@
 	imagelol_uid = jocke
 	imagelol_gid = bilder
 	image_filenames = cr2|jpg|jpeg|png|gif
-	movie_filenames = mov|avi
+	movie_filenames = mov|avi|mpeg|mp4
 	psd_filenames = psd
 	raw_image = cr2
 	default_category = 6D
