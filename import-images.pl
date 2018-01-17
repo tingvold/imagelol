@@ -59,7 +59,7 @@ if ($category){
 	die error_log("Invalid category. Only numbers and letters allowed.") unless ($category =~ m/^[a-zA-Z0-9]+$/);
 }
 
-# Check if valid date is entered; 2012-03-04
+# Check if valid date is entered; 2012:03:04
 if ($date_override){
 	unless ($date_override =~ m/^[0-9]{4}\:[0-9]{2}\:[0-9]{2}$/){
 		die error_log("Invalid date entered ($date_override). Should look like 'YYYY:MM:DD'. Try again.");
