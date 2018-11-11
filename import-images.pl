@@ -124,11 +124,22 @@ sub process_image{
 		# First we try to use EXIF, and if that fails, we use the 'file created'
 		my $exif_tags = Image::ExifTool::ImageInfo(	$image->{org_src}, { PrintConv => 0 },
 								'DateTimeOriginal', 'PreviewImage', 'Orientation',
-								'FileType', 'FileModifyDate' );
+								'FileType', 'FileModifyDate', 'QuickTime:CreateDate' );
 		return error_log("EXIF failed: $exif_tags->{Error}") if $exif_tags->{'Error'};
 
 		my ($date, $time, $full_date);
-		if (defined($exif_tags->{'DateTimeOriginal'})){
+		if (defined($exif_tags->{'CreateDate'})){
+			# Should only be present in videos
+			# Prefer this value, since it easily can be
+			# manipulated by different exif tools
+			# [QuickTime]	CreateDate	: 2016:06:27 14:23:51
+			if ($exif_tags->{'CreateDate'} =~ m/^[0-9]{4}\:[0-9]{2}\:[0-9]{2}\s+/){
+				($date, $time) = (split(' ', $exif_tags->{'CreateDate'}));
+				$date = $date_override if $date_override; # override if specified
+				($full_date = $date) =~ s/\:/-/g;
+				$full_date .= " " . $time;
+			}
+		} elsif (defined($exif_tags->{'DateTimeOriginal'})){
 			# We have a value
 			# 'DateTimeOriginal' => '2012:12:31 17:50:01',
 
@@ -397,12 +408,12 @@ if($help){
 	# print help
 	print qq(
 
-	s|src|source=s		# the source of the images to be imported
-	c|cat|category=s	# category to put the images in
-	d|desc|description=s	# add comment/description to imported images
-	f|force			# force copy/update, even if destination exist
-	date=s			# override date of files being added
-	help			# show help
+		s|src|source=s		# the source of the images to be imported
+		c|cat|category=s	# category to put the images in
+		d|desc|description=s	# add comment/description to imported images
+		f|force			# force copy/update, even if destination exist
+		date=s			# override date of files being added
+		help			# show help
 
 
 );

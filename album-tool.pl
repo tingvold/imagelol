@@ -628,22 +628,22 @@ if($help){
 	# print help
 	print qq(
 
-	s|search=s		# searches in the path_original table
-	r|range=s		# the range of images, separated by comma
-	a|album=s		# name of the album
-	aid=s			# use albumid to edit albums
-	d|desc|description=s	# description of album
-	c|cat|category=s	# define category -- use default if not defined
-	p|parent=s		# set a parent id for this album
-	delete			# disable all image ranges, or remove parent id
-	list|print		# list latest 10 albums
-	all			# list all albums
-	uuid 			# list UUID-download-link
-	gen|generate|cron	# generate symlinks
-	empty			# make empty album
-	disable			# disable specified album
-	enable			# enable specified album
-	help			# show help
+		s|search=s		# searches in the path_original table
+		r|range=s		# the range of images, separated by comma
+		a|album=s		# name of the album
+		aid=s			# use albumid to edit albums
+		d|desc|description=s	# description of album
+		c|cat|category=s	# define category -- use default if not defined
+		p|parent=s		# set a parent id for this album
+		delete			# disable all image ranges, or remove parent id
+		list|print		# list latest 10 albums
+		all			# list all albums
+		uuid 			# list UUID-download-link
+		gen|generate|cron	# generate symlinks
+		empty			# make empty album
+		disable			# disable specified album
+		enable			# enable specified album
+		help			# show help
 
 
 );
