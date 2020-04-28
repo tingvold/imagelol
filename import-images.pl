@@ -133,7 +133,9 @@ sub process_image{
       'QuickTime:CreateDate',
       'QuickTime:CreationDate'
     );
-    return error_log("EXIF failed: $exif_tags->{Error}") if $exif_tags->{'Error'};
+    if($exif_tags->{'Error'}){
+      return error_log("EXIF failed: $exif_tags->{Error}");
+    }
 
     my ($date, $time, $full_date);
     if (defined($exif_tags->{'CreationDate'})){
