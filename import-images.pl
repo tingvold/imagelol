@@ -122,9 +122,17 @@ sub process_image{
 
     # We need to figure out the date the picture was taken
     # First we try to use EXIF, and if that fails, we use the 'file created'
-    my $exif_tags = Image::ExifTool::ImageInfo(	$image->{org_src}, { PrintConv => 0 },
-                'DateTimeOriginal', 'PreviewImage', 'Orientation',
-                'FileType', 'FileModifyDate', 'QuickTime:CreateDate' );
+		my $exif_tags = Image::ExifTool::ImageInfo(
+      $image->{org_src},
+      { PrintConv => 0 },
+			'DateTimeOriginal',
+      'PreviewImage',
+      'Orientation',
+			'FileType',
+      'FileModifyDate',
+      'QuickTime:CreateDate',
+      'QuickTime:CreationDate'
+    );
     return error_log("EXIF failed: $exif_tags->{Error}") if $exif_tags->{'Error'};
 
     my ($date, $time, $full_date);
