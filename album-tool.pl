@@ -282,7 +282,7 @@ sub list_albums{
   my $img_count;
   
   if((scalar keys %$albums) > 0){
-    # We have albums -- go through them one-by-one, sorted by date added
+    # We have albums -- go through them one-by-one, sorted by date added (newest first)
     print("\n\n\n");
 
     if($list_uuid){
@@ -432,7 +432,7 @@ sub list_images{
   my $album_images = $imagelol->get_album_images($album_info->{albumid});
 
   if((scalar keys %$album_images) > 0){
-    # We have images -- go through them one-by-one, sorted by date added
+    # We have images -- go through them one-by-one, sorted by date added (oldest first)
     print("\n\n\n");
 
     printf("Images for album '%s' (%s):\n\n",
@@ -454,7 +454,7 @@ sub list_images{
     
     my $img_count = 0;
 
-    foreach my $imageid (sort { $album_images->{$b}->{imagedate} cmp $album_images->{$a}->{imagedate} } keys %$album_images){
+    foreach my $imageid (sort { $album_images->{$a}->{imagedate} cmp $album_images->{$b}->{imagedate} } keys %$album_images){
       printf("%-20s %-20s %-30s %-20s %-10s %-70s\n",
         $imageid,
         $album_images->{$imageid}->{imagename},
